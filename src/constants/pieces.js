@@ -1,0 +1,88 @@
+export const pieceCharToString = {
+  k: "black/king",
+  q: "black/queen",
+  b: "black/bishop",
+  n: "black/knight",
+  p: "black/pawn",
+  r: "black/rook",
+  K: "white/king",
+  Q: "white/queen",
+  B: "white/bishop",
+  N: "white/knight",
+  P: "white/pawn",
+  R: "white/rook",
+};
+
+export const pieceStringToChar = {
+  "black/king": "k",
+  "black/queen": "q",
+  "black/bishop": "b",
+  "black/knight": "n",
+  "black/pawn": "p",
+  "black/rook": "r",
+  "white/king": "K",
+  "white/queen": "Q",
+  "white/bishop": "B",
+  "white/knight": "N",
+  "white/pawn": "P",
+  "white/rook": "R",
+};
+
+export const moveOffsets = {
+  pawn: {
+    white: [
+      { x: 0, y: -1 },
+      { x: 0, y: -2 },
+      { x: 1, y: -1 },
+      { x: -1, y: -1 },
+    ],
+    black: [
+      { x: 0, y: 1 },
+      { x: 0, y: 2 },
+      { x: 1, y: 1 },
+      { x: -1, y: 1 },
+    ],
+  },
+  king: [
+    { x: 0, y: 1 },
+    { x: 1, y: 1 },
+    { x: 1, y: 0 },
+    { x: 1, y: -1 },
+    { x: 0, y: -1 },
+    { x: -1, y: -1 },
+    { x: -1, y: 0 },
+    { x: -1, y: 1 },
+  ],
+  queen: [
+    { x: 0, y: 1 },
+    { x: 1, y: 1 },
+    { x: 1, y: 0 },
+    { x: 1, y: -1 },
+    { x: 0, y: -1 },
+    { x: -1, y: -1 },
+    { x: -1, y: 0 },
+    { x: -1, y: 1 },
+  ],
+  bishop: [
+    { x: 1, y: 1 },
+    { x: -1, y: 1 },
+    { x: -1, y: -1 },
+    { x: 1, y: -1 },
+  ],
+  knight: [
+    { x: 2, y: 1 },
+    { x: 2, y: -1 },
+    { x: -1, y: 2 },
+    { x: 1, y: 2 },
+    { x: -2, y: 1 },
+    { x: -2, y: -1 },
+    { x: -1, y: -2 },
+    { x: 1, y: -2 },
+  ],
+  rook: [
+    { x: 0, y: 1 },
+    { x: 0, y: -1 },
+    { x: 1, y: 0 },
+    { x: -1, y: 0 },
+  ],
+};
