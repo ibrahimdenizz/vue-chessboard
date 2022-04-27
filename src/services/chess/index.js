@@ -22,30 +22,48 @@ class Chess {
   halfMoveCount = 0;
   moveCount = 1;
   moves = [];
+  history = [];
 
-  constructor() {
-    this.fen = DEFAULT_FEN;
+  constructor(fen) {
+    this.fen = fen || DEFAULT_FEN;
+    this.buildMoves();
   }
 
-  buildMoves() {
-    this.moves = [];
+  generatePseudoLegalMoves() {
+    const pseudoMoves = [];
     this.board.squares
       .filter((piece) => piece && piece.color === this.currentPlayer)
       .forEach((piece) => {
         if (piece.code.toLowerCase() === pieceCode.pawn)
-          this.generatePawnMoves(piece);
-        else this.generatePieceMoves(piece);
+          pseudoMoves.push(...Move.generatePawnMoves(piece, this));
+        else pseudoMoves.push(...Move.generatePieceMoves(piece, this));
       });
+    return pseudoMoves;
   }
 
-  generatePawnMoves(piece) {
-    const moves = Move.generatePawnMoves(piece, this);
-    this.moves.push(...moves);
+  getLegalMoves() {
+    const pseudoMoves = this.generatePseudoLegalMoves();
+    for (const pseudoMove of pseudoMoves) {
+      this._makeMove(pseudoMove);
+      const opponentMoves = this.generatePseudoLegalMoves();
+      if (!opponentMoves.find((move) => move.isCheck)) {
+        this.moves.push(pseudoMove);
+      }
+      this.undoMove();
+    }
+    console.log(pseudoMoves, this.moves, this.board.squares, this.history);
   }
 
-  generatePieceMoves(piece) {
-    const moves = Move.generatePieceMoves(piece, this);
-    this.moves.push(...moves);
+  buildMoves() {
+    this.moves = [];
+    this.getLegalMoves();
+  }
+
+  checkKingCheck() {
+    //const kingCaptureMoves = this.moves.filter(
+    //  (move) => move.capture && move.capture.type === pieceCode.king
+    //);
+    //  const kingCapturePiece = kingCaptureMoves.map((x) => x.piece);
   }
 
   getPiece(x, y = null) {
@@ -53,6 +71,10 @@ class Chess {
   }
 
   getPieceMoves(piece) {
+    console.log(
+      piece,
+      this.moves.filter((move) => move.piece.equals(piece))
+    );
     return this.moves.filter((move) => move.piece.equals(piece));
   }
 
@@ -60,7 +82,6 @@ class Chess {
     const piece = move.piece;
     if (piece.type === pieceCode.king) this.castling[piece.color] = 0;
     else if (piece.type === pieceCode.rook) {
-      console.log(piece.index, rookSides[piece.color].q);
       if (piece.index === rookSides[piece.color].k)
         this.castling[piece.color] &= Q_SIDE_CASTLE;
       else if (piece.index === rookSides[piece.color].q)
@@ -68,7 +89,7 @@ class Chess {
     }
   }
 
-  makeMove(move) {
+  _makeMove(move) {
     this.board.squares[move.startIndex] = null;
     this.enPassantIndex = move.enPassant ? move.targetIndex : null;
     if (this.currentPlayer === BLACK) this.moveCount++;
@@ -81,7 +102,7 @@ class Chess {
     } else if (move.castling) {
       this.makeCastlingMove(move);
     } else {
-      const piece = move.piece;
+      const piece = move.piece.copy;
       piece.index = move.targetIndex;
       this.board.squares[move.targetIndex] = piece;
     }
@@ -90,11 +111,24 @@ class Chess {
       this.halfMoveCount = 0;
     else this.halfMoveCount++;
 
+    this.history.push(this.fen);
+  }
+
+  makeMove(move) {
+    this._makeMove(move);
     this.buildMoves();
   }
 
+  undoMove() {
+    if (this.history.length > 1) {
+      this.history.pop();
+      this.fen = this.history[this.history.length - 1];
+    }
+  }
+
   makeCastlingMove(move) {
-    const piece = move.piece;
+    const piece = move.piece.copy;
+
     if (move.castling & K_SIDE_CASTLE) {
       this.board.squares[piece.index + 2] = piece;
       const rook = this.getPiece(rookSides[piece.color].k);
@@ -115,7 +149,7 @@ class Chess {
   }
 
   makePawnMove(move) {
-    const piece = move.piece;
+    const piece = move.piece.copy;
     piece.index = move.targetIndex;
 
     if (move.isTargetLastFile) {
@@ -168,7 +202,6 @@ class Chess {
   }
 
   get fenEnPassant() {
-    console.log(this.enPassantIndex);
     if (this.enPassantIndex === null) return "-";
     else {
       const char = (this.enPassantIndex % 8) + 97;
@@ -178,7 +211,6 @@ class Chess {
   }
 
   set fen(fen) {
-    console.log(fen);
     const split_fen = fen.split(" ");
     this.board.fenPosition = split_fen[0];
     this.currentPlayer = split_fen[1] === "w" ? WHITE : BLACK;
@@ -186,7 +218,6 @@ class Chess {
     this.enPassant = split_fen[3];
     this.halfMoveCount = parseInt(split_fen[4]);
     this.moveCount = parseInt(split_fen[5]);
-    this.buildMoves();
   }
 
   get fen() {

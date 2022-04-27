@@ -51,6 +51,10 @@ class Piece {
     return pieceCodeToMoveOffsets[this.type];
   }
 
+  get copy() {
+    return new Piece({ index: this.index, color: this.color, code: this.code });
+  }
+
   setIsSlide(value) {
     value = value.toLowerCase();
     this.isSlide =
@@ -60,6 +64,7 @@ class Piece {
   }
 
   equals(piece) {
+    console.log(piece.index, this.index);
     return piece.index === this.index;
   }
 }

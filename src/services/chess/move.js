@@ -4,7 +4,6 @@ import {
   mailbox64,
   mailboxOffsets,
   pieceCode,
-  pieceNameToCode,
   Q_SIDE_CASTLE,
   WHITE,
 } from "@/constants/chess";
@@ -33,10 +32,7 @@ export default class Move {
   }
 
   get isCheck() {
-    return (
-      this.capture.pieceCode === pieceNameToCode.black.king ||
-      this.capture.pieceCode === pieceNameToCode.white.king
-    );
+    return this.capture && this.capture.type === pieceCode.king;
   }
 
   get startPosition() {

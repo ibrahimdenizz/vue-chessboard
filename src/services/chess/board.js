@@ -30,8 +30,12 @@ export default class Board {
   }
 
   getPiece(x, y = null) {
-    if (y) return this.squares[(y - 1) * 8 + (x - 1)];
-    else return this.squares[x];
+    if (y)
+      return (
+        this.squares[(y - 1) * 8 + (x - 1)] &&
+        this.squares[(y - 1) * 8 + (x - 1)].copy
+      );
+    else return this.squares[x] && this.squares[x].copy;
   }
 
   get fenPosition() {
