@@ -1,10 +1,12 @@
 <script>
+import { ChessGame } from "@/services/chess";
 import BoardGround from "./BoardGround.vue";
 
 export default {
   name: "ChessBoard",
   data() {
     return {
+      game: new ChessGame(),
       validMoves: [],
       selectedPiece: null,
     };
@@ -17,25 +19,28 @@ export default {
   components: {
     BoardGround,
   },
+  watch: {
+    fen(newFEN) {
+      this.game.fen = newFEN;
+    },
+  },
   created() {
-    this.$game.loadGameWithFen(this.fen);
+    this.game.loadGameWithFen(this.fen);
   },
   methods: {
     isActivePiece(piece) {
-      return piece && piece.color === this.$game.currentPlayer;
+      return piece && piece.color === this.game.currentPlayer;
     },
     selectPiece(piece) {
-      console.log(piece);
       if (!this.isActivePiece(piece)) return;
       this.selectedPiece = piece;
-      this.validMoves = this.$game.getPieceMoves(piece);
-      console.log(this.validMoves);
+      this.validMoves = this.game.getPieceMoves(piece);
     },
     makeMove(move) {
-      this.$game.makeMove(move);
+      this.game.makeMove(move);
       this.validMoves = [];
       this.selectedPiece = null;
-      this.$emit("onFenChange", this.$game.fen);
+      this.$emit("onFenChange", this.game.fen);
     },
   },
 };
@@ -44,6 +49,7 @@ export default {
 <template>
   <div class="board" :style="{ width: `${size}px`, height: `${size}px` }">
     <board-ground
+      :game="game"
       :size="size"
       :fen="fen"
       @selectPiece="selectPiece"

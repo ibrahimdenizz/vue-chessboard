@@ -15,7 +15,7 @@ import Board from "./board";
 import Move from "./move";
 import { pieceCodeToCaptureOffsets } from "../../constants/chess";
 
-class Chess {
+export class ChessGame {
   board = new Board();
   currentPlayer = WHITE;
   castling = {
@@ -260,10 +260,3 @@ class Chess {
     return `${this.board.fenPosition} ${this.fenTurn} ${this.fenCastling} ${this.fenEnPassant} ${this.halfMoveCount} ${this.moveCount}`;
   }
 }
-
-export default {
-  install: (app) => {
-    // Plugin code goes here
-    app.config.globalProperties.$game = new Chess();
-  },
-};

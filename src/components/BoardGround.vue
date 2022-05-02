@@ -1,11 +1,13 @@
 <script>
 import fenToBoardArr from "@/helpers/fenToBoardArr";
+import { ChessGame } from "@/services/chess";
 
 export default {
   name: "BoardGround",
   props: {
     size: Number,
     fen: String,
+    game: ChessGame,
   },
   emits: ["selectPiece", "isActivePiece"],
   computed: {
@@ -15,7 +17,7 @@ export default {
   },
   methods: {
     getPiece(x, y) {
-      return this.$game.getPiece(x, y);
+      return this.game.getPiece(x, y);
     },
   },
 };
@@ -39,7 +41,7 @@ export default {
         @click="$emit('selectPiece', getPiece(x, y))"
       >
         <img
-          :src="getPiece(x, y).imgUrl"
+          :src="getPiece(x, y).img"
           :alt="getPiece(x, y).imgAlt"
           :width="size * 0.11"
           :height="size * 0.11"

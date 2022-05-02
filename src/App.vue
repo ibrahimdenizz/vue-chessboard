@@ -1,25 +1,50 @@
 <template>
-  <router-view />
+  <div class="home">
+    <chess-board :size="chessBoardSize" :fen="fen" @onFenChange="onFenChange" />
+  </div>
 </template>
 
-<style lang="scss">
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-}
+<script>
+import ChessBoard from "@/components/ChessBoard.vue";
 
-body {
-  margin: 0;
-  padding: 0;
-}
+const ratio = 0.8;
 
-.no-select {
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
+export default {
+  name: "App",
+  data() {
+    const [width, height] = [window.innerWidth, window.innerHeight];
+    return {
+      chessBoardSize: width > height ? height * ratio : width * ratio,
+      fen: "rnbk1b1r/pp3ppp/2p5/4q1B1/4n3/8/PPP2PPP/2KR1BNR b - - 1 10",
+    };
+  },
+  components: {
+    ChessBoard,
+  },
+  mounted() {
+    window.addEventListener("resize", this.myEventHandler);
+  },
+  unmounted() {
+    window.removeEventListener("resize", this.myEventHandler);
+  },
+  methods: {
+    myEventHandler() {
+      const [width, height] = [window.innerWidth, window.innerHeight];
+      this.chessBoardSize = width > height ? height * ratio : width * ratio;
+    },
+    onFenChange(newFen) {
+      this.fen = newFen;
+    },
+  },
+};
+</script>
+
+<style lang="scss" scoped>
+.home {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 </style>
