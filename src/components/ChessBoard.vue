@@ -17,18 +17,8 @@ export default {
   components: {
     BoardGround,
   },
-  watch: {
-    fen: {
-      handler(newFen) {
-        this.$game.fen = newFen;
-      },
-      immediate: true,
-    },
-  },
-  computed: {
-    currentPlayer() {
-      return this.fen.split(" ")[1] === "w" ? "white" : "black";
-    },
+  created() {
+    this.$game.loadGameWithFen(this.fen);
   },
   methods: {
     isActivePiece(piece) {

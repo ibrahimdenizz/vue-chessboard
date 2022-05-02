@@ -60,6 +60,15 @@ export const pieceCodeToMoveOffsets = {
   r: [1, 8, -1, -8],
 };
 
+export const pieceCodeToCaptureOffsets = {
+  k: [1, 7, -8, 9, 1, -7, -8, -9],
+  q: [1, 7, -8, 9, 1, -7, -8, -9],
+  b: [7, 9, -7, -9],
+  n: [6, 10, 15, 17, -6, -10, -15, -17],
+  p: { [WHITE]: [-7, -9], [BLACK]: [7, 9] },
+  r: [1, 8, -1, -8],
+};
+
 /* 10x12 Board move generation constants */
 
 export const mailboxOutside = -1;

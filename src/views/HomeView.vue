@@ -7,7 +7,6 @@
 <script>
 // @ is an alias to /src
 import ChessBoard from "@/components/ChessBoard.vue";
-import { DEFAULT_FEN } from "@/constants/chess";
 
 const ratio = 0.8;
 
@@ -17,7 +16,7 @@ export default {
     const [width, height] = [window.innerWidth, window.innerHeight];
     return {
       chessBoardSize: width > height ? height * ratio : width * ratio,
-      fen: DEFAULT_FEN,
+      fen: "rnbk1b1r/pp3ppp/2p5/4q1B1/4n3/8/PPP2PPP/2KR1BNR b - - 1 10",
     };
   },
   components: {

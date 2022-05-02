@@ -7,9 +7,13 @@ import {
   Q_SIDE_CASTLE,
   rookSides,
   WHITE,
+  mailbox,
+  mailbox64,
+  mailboxOffsets,
 } from "@/constants/chess";
 import Board from "./board";
 import Move from "./move";
+import { pieceCodeToCaptureOffsets } from "../../constants/chess";
 
 class Chess {
   board = new Board();
@@ -34,7 +38,7 @@ class Chess {
     this.board.squares
       .filter((piece) => piece && piece.color === this.currentPlayer)
       .forEach((piece) => {
-        if (piece.code.toLowerCase() === pieceCode.pawn)
+        if (piece.type === pieceCode.pawn)
           pseudoMoves.push(...Move.generatePawnMoves(piece, this));
         else pseudoMoves.push(...Move.generatePieceMoves(piece, this));
       });
@@ -51,19 +55,45 @@ class Chess {
       }
       this.undoMove();
     }
-    console.log(pseudoMoves, this.moves, this.board.squares, this.history);
   }
 
   buildMoves() {
     this.moves = [];
     this.getLegalMoves();
+    this.checkDoubleCheck();
+    console.log(this.moves, this.castling);
   }
 
-  checkKingCheck() {
-    //const kingCaptureMoves = this.moves.filter(
-    //  (move) => move.capture && move.capture.type === pieceCode.king
-    //);
-    //  const kingCapturePiece = kingCaptureMoves.map((x) => x.piece);
+  checkDoubleCheck() {
+    const offsets = mailboxOffsets.k;
+    let captureCount = 0;
+    for (const offset of offsets) {
+      /* for all knight or ray directions */
+      let index = this.board.kings[this.currentPlayer].index;
+      index = mailbox[mailbox64[index] + offset];
+      while (index != -1) {
+        /* starting with from square */
+        /* next square along the ray j */
+        const sq = this.getPiece(index);
+        if (sq != null) {
+          const captureOffsets = pieceCodeToCaptureOffsets[sq.type];
+          if (sq.color != this.currentPlayer && offset in captureOffsets) {
+            captureCount++;
+            console.log(sq);
+          } /* capture from i to n */
+          break;
+        }
+
+        index = mailbox[mailbox64[index] + offset];
+      }
+      if (captureCount == 2) {
+        this.moves = this.moves.filter(
+          (move) => move.piece.type === pieceCode.king
+        );
+        break;
+      }
+    }
+    console.log(captureCount);
   }
 
   getPiece(x, y = null) {
@@ -71,10 +101,6 @@ class Chess {
   }
 
   getPieceMoves(piece) {
-    console.log(
-      piece,
-      this.moves.filter((move) => move.piece.equals(piece))
-    );
     return this.moves.filter((move) => move.piece.equals(piece));
   }
 
@@ -159,6 +185,11 @@ class Chess {
     this.board.squares[move.targetIndex] = piece;
   }
 
+  loadGameWithFen(fen) {
+    this.fen = fen;
+    this.buildMoves();
+  }
+
   set enPassant(value) {
     if (value === "-") {
       this.enPassantIndex = null;
@@ -169,22 +200,26 @@ class Chess {
   }
 
   set castlingStr(value) {
-    for (const char of value.split("")) {
-      switch (char) {
-        case "K":
-          this.castling[WHITE] |= K_SIDE_CASTLE;
-          break;
-        case "Q":
-          this.castling[WHITE] |= Q_SIDE_CASTLE;
-          break;
-        case "k":
-          this.castling[BLACK] |= K_SIDE_CASTLE;
-          break;
-        case "q":
-          this.castling[BLACK] |= Q_SIDE_CASTLE;
-          break;
+    this.castling[WHITE] = 0;
+    this.castling[BLACK] = 0;
+
+    if (value !== "-")
+      for (const char of value.split("")) {
+        switch (char) {
+          case "K":
+            this.castling[WHITE] |= K_SIDE_CASTLE;
+            break;
+          case "Q":
+            this.castling[WHITE] |= Q_SIDE_CASTLE;
+            break;
+          case "k":
+            this.castling[BLACK] |= K_SIDE_CASTLE;
+            break;
+          case "q":
+            this.castling[BLACK] |= Q_SIDE_CASTLE;
+            break;
+        }
       }
-    }
   }
 
   // FEN
@@ -218,6 +253,7 @@ class Chess {
     this.enPassant = split_fen[3];
     this.halfMoveCount = parseInt(split_fen[4]);
     this.moveCount = parseInt(split_fen[5]);
+    this.history.push(fen);
   }
 
   get fen() {

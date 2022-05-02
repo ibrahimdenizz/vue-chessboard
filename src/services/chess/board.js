@@ -1,9 +1,13 @@
-import { BLACK, DEFAULT_FEN, WHITE } from "@/constants/chess";
+import { BLACK, DEFAULT_FEN, pieceCode, WHITE } from "@/constants/chess";
 import Piece from "./pieces";
 
 export default class Board {
   squares = Array(64).fill(null);
   validMoves = [];
+  kings = {
+    [WHITE]: null,
+    [BLACK]: null,
+  };
 
   constructor(fen) {
     this.fenPosition = fen || DEFAULT_FEN.split(" ")[0];
@@ -22,7 +26,11 @@ export default class Board {
             code: char,
             color: char !== char.toLowerCase() ? WHITE : BLACK,
           };
-          this.squares[y * 8 + x] = new Piece(pieceParam);
+          const piece = new Piece(pieceParam);
+          this.squares[y * 8 + x] = piece;
+          if (piece.type === pieceCode.king) {
+            this.kings[piece.color] = piece;
+          }
           x++;
         }
       });
