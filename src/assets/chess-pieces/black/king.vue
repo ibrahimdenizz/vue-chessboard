@@ -1,0 +1,98 @@
+<template>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    :width="size"
+    :height="size"
+    viewBox="0 0 45 45"
+    version="1.1"
+  >
+    <g id="surface1">
+      <path
+        style="
+          fill: none;
+          stroke-width: 1.5;
+          stroke-linecap: round;
+          stroke-linejoin: miter;
+          stroke: rgb(0%, 0%, 0%);
+          stroke-opacity: 1;
+          stroke-miterlimit: 4;
+        "
+        d="M 22.5 11.628906 L 22.5 6 "
+      />
+      <path
+        style="
+          fill-rule: evenodd;
+          fill: rgb(0%, 0%, 0%);
+          fill-opacity: 1;
+          stroke-width: 1.5;
+          stroke-linecap: butt;
+          stroke-linejoin: miter;
+          stroke: rgb(0%, 0%, 0%);
+          stroke-opacity: 1;
+          stroke-miterlimit: 4;
+        "
+        d="M 22.5 25 C 22.5 25 27 17.5 25.5 14.5 C 25.5 14.5 24.5 12 22.5 12 C 20.5 12 19.5 14.5 19.5 14.5 C 18 17.5 22.5 25 22.5 25 "
+      />
+      <path
+        style="
+          fill-rule: evenodd;
+          fill: rgb(0%, 0%, 0%);
+          fill-opacity: 1;
+          stroke-width: 1.5;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+          stroke: rgb(0%, 0%, 0%);
+          stroke-opacity: 1;
+          stroke-miterlimit: 4;
+        "
+        d="M 12.5 37 C 18 40.5 27 40.5 32.5 37 L 32.5 30 C 32.5 30 41.5 25.5 38.5 19.5 C 34.5 13 25 16 22.5 23.5 L 22.5 27 L 22.5 23.5 C 20 16 10.5 13 6.5 19.5 C 3.5 25.5 12.5 30 12.5 30 L 12.5 37 "
+      />
+      <path
+        style="
+          fill: none;
+          stroke-width: 1.5;
+          stroke-linecap: round;
+          stroke-linejoin: miter;
+          stroke: rgb(0%, 0%, 0%);
+          stroke-opacity: 1;
+          stroke-miterlimit: 4;
+        "
+        d="M 20 8 L 25 8 "
+      />
+      <path
+        style="
+          fill: none;
+          stroke-width: 1.5;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+          stroke: rgb(100%, 100%, 100%);
+          stroke-opacity: 1;
+          stroke-miterlimit: 4;
+        "
+        d="M 32 29.5 C 32 29.5 40.5 25.5 38.03125 19.851562 C 34.148438 14 25 18 22.5 24.5 L 22.5 26.601562 L 22.5 24.5 C 20 18 10.851562 14 6.96875 19.851562 C 4.5 25.5 13 29.5 13 29.5 "
+      />
+      <path
+        style="
+          fill: none;
+          stroke-width: 1.5;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+          stroke: rgb(100%, 100%, 100%);
+          stroke-opacity: 1;
+          stroke-miterlimit: 4;
+        "
+        d="M 12.5 30 C 18 27 27 27 32.5 30 M 12.5 33.5 C 18 30.5 27 30.5 32.5 33.5 M 12.5 37 C 18 34 27 34 32.5 37 "
+      />
+    </g>
+  </svg>
+</template>
+
+<script>
+export default {
+  name: "BlackKing",
+  props: {
+    size: Number,
+  },
+};
+</script>

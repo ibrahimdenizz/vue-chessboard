@@ -1,32 +1,52 @@
 {
-  "name": "chess-game",
+  "name": "vue-chessboard",
+  "description": "Chessboard component for vue based on fen notation",
   "version": "0.1.0",
-  "private": true,
+  "author": {
+    "name": "İbrahim Deniz",
+    "email": "dnzibrahim1@gmail.com"
+  },
+  "keywords": [
+    "chessboard",
+    "chess",
+    "vue",
+    "vuejs"
+  ],
+  "license": "MIT",
+  "files": [
+    "dist",
+    "dist/style.css"
+  ],
+  "main": "./dist/umd.js",
+  "module": "./dist/es.js",
+  "exports": {
+    ".": {
+      "import": "./dist/es.js",
+      "require": "./dist/umd.js"
+    },
+    "./dist/style.css": "./dist/style.css"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ibrahimdenizz/vue-chessboard.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ibrahimdenizz/vue-chessboard/issues"
+  },
+  "homepage": "https://github.com/ibrahimdenizz/vue-chessboard/tree/main#readme",
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite --config dev.vite.config.js preview",
+    "build:dev": "vite --config dev.vite.config.js build"
   },
   "dependencies": {
-    "core-js": "^3.8.3",
-    "vue": "^3.2.13"
+    "vue": "^3.2.33"
   },
   "devDependencies": {
-    "@babel/core": "^7.12.16",
-    "@babel/eslint-parser": "^7.12.16",
     "@vitejs/plugin-vue": "^2.3.1",
-    "@vue/cli-plugin-babel": "~5.0.0",
-    "@vue/cli-plugin-eslint": "~5.0.0",
-    "@vue/cli-plugin-router": "~5.0.0",
-    "@vue/cli-plugin-vuex": "~5.0.0",
-    "@vue/cli-service": "~5.0.0",
-    "eslint": "^7.32.0",
-    "eslint-config-prettier": "^8.3.0",
-    "eslint-plugin-prettier": "^4.0.0",
-    "eslint-plugin-vue": "^8.0.3",
-    "prettier": "^2.4.1",
-    "sass": "^1.32.7",
-    "sass-loader": "^12.0.0",
+    "prettier": "^2.6.2",
+    "sass": "^1.51.0",
     "vite": "^2.9.7"
   }
 }

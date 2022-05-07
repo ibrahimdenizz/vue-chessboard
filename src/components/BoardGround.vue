@@ -1,6 +1,6 @@
 <script>
-import fenToBoardArr from "@/helpers/fenToBoardArr";
 import { ChessGame } from "@/services/chess";
+import Piece from "./Piece.vue";
 
 export default {
   name: "BoardGround",
@@ -10,16 +10,12 @@ export default {
     game: ChessGame,
   },
   emits: ["selectPiece", "isActivePiece"],
-  computed: {
-    board() {
-      return fenToBoardArr(this.fen);
-    },
-  },
   methods: {
     getPiece(x, y) {
       return this.game.getPiece(x, y);
     },
   },
+  components: { Piece },
 };
 </script>
 
@@ -40,12 +36,7 @@ export default {
         "
         @click="$emit('selectPiece', getPiece(x, y))"
       >
-        <img
-          :src="getPiece(x, y).img"
-          :alt="getPiece(x, y).imgAlt"
-          :width="size * 0.11"
-          :height="size * 0.11"
-        />
+        <piece :size="size" :piece="getPiece(x, y)" />
       </div>
     </div>
   </template>
@@ -135,6 +126,9 @@ $light-color: #f0d9b5;
   width: 100%;
   height: 100%;
   z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 .active-piece {
   cursor: pointer;

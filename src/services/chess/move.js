@@ -7,6 +7,8 @@ import {
   Q_SIDE_CASTLE,
   WHITE,
 } from "@/constants/chess";
+import { ChessGame } from ".";
+import Piece from "./pieces";
 
 export default class Move {
   piece = null;
@@ -84,10 +86,24 @@ export default class Move {
 
     for (const capture of captures) {
       if (capture && capture.color != piece.color) {
-        moveParams.targetIndex = validMoves[2];
+        moveParams.targetIndex = capture.index;
         moveParams.capture = capture;
         returnMoves.push(new Move(moveParams));
       }
+    }
+
+    const enPassantIndexes = [piece.index - 1, piece.index + 1];
+
+    const validEnPassantIndex = enPassantIndexes.find(
+      (x) => x === chess.enPassantIndex
+    );
+
+    if (validEnPassantIndex) {
+      const enPassantPiece = chess.getPiece(validEnPassantIndex);
+      moveParams.capture = enPassantPiece;
+      moveParams.targetIndex =
+        validEnPassantIndex === piece.index - 1 ? validMoves[3] : validMoves[2];
+      returnMoves.push(new Move(moveParams));
     }
 
     return returnMoves;
