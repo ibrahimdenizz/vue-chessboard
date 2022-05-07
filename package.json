@@ -37,7 +37,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:dev": "vite --config dev.vite.config.js build"
   },
   "dependencies": {
     "vue": "^3.2.33"
