@@ -66,12 +66,12 @@ __metadata:
   linkType: hard
 
 "@vitejs/plugin-vue@npm:^2.3.1":
-  version: 2.3.1
-  resolution: "@vitejs/plugin-vue@npm:2.3.1"
+  version: 2.3.2
+  resolution: "@vitejs/plugin-vue@npm:2.3.2"
   peerDependencies:
     vite: ^2.5.10
     vue: ^3.2.25
-  checksum: 7102d80c7b37c5761213ca57a5d50db95bda387dee92a77bd3d0198fd00c47d117ba82761c26a9d40f83e274d6fa8e3932765f5f930e8139848be7b7b176a200
+  checksum: cfd539b412fee269705a8fd81cbc45529ffc3fe3d1962c6d70b8532994c95d2a54004afc94eef161c64055644a4e7be44b95654fd78d8bd01b61acf6190c34d4
   languageName: node
   linkType: hard
 
@@ -898,11 +898,11 @@ __metadata:
   linkType: hard
 
 "is-core-module@npm:^2.8.1":
-  version: 2.8.1
-  resolution: "is-core-module@npm:2.8.1"
+  version: 2.9.0
+  resolution: "is-core-module@npm:2.9.0"
   dependencies:
     has: ^1.0.3
-  checksum: 418b7bc10768a73c41c7ef497e293719604007f88934a6ffc5f7c78702791b8528102fb4c9e56d006d69361549b3d9519440214a74aefc7e0b79e5e4411d377f
+  checksum: b27034318b4b462f1c8f1dfb1b32baecd651d891a4e2d1922135daeff4141dfced2b82b07aef83ef54275c4a3526aa38da859223664d0868ca24182badb784ce
   languageName: node
   linkType: hard
 
@@ -1111,11 +1111,11 @@ __metadata:
   linkType: hard
 
 "nanoid@npm:^3.3.3":
-  version: 3.3.3
-  resolution: "nanoid@npm:3.3.3"
+  version: 3.3.4
+  resolution: "nanoid@npm:3.3.4"
   bin:
     nanoid: bin/nanoid.cjs
-  checksum: ada019402a07464a694553c61d2dca8a4353645a7d92f2830f0d487fedff403678a0bee5323a46522752b2eab95a0bc3da98b6cccaa7c0c55cd9975130e6d6f0
+  checksum: 2fddd6dee994b7676f008d3ffa4ab16035a754f4bb586c61df5a22cf8c8c94017aadd360368f47d653829e0569a92b129979152ff97af23a558331e47e37cd9c
   languageName: node
   linkType: hard
 
@@ -1324,8 +1324,8 @@ __metadata:
   linkType: hard
 
 "rollup@npm:^2.59.0":
-  version: 2.71.1
-  resolution: "rollup@npm:2.71.1"
+  version: 2.72.0
+  resolution: "rollup@npm:2.72.0"
   dependencies:
     fsevents: ~2.3.2
   dependenciesMeta:
@@ -1333,7 +1333,7 @@ __metadata:
       optional: true
   bin:
     rollup: dist/bin/rollup
-  checksum: fe2b2fda7bf53c86e970f3b026b784c00e2237089b802755b3e43725db88f5d1869c1f81f8c5257e9b68b0fd1840dcbd3897d2f19768cce97a37c70e1a563dce
+  checksum: d4c213d4250a0455e0ee40664db3339a9e3ca5affa09c348019b4895e7100cdbedeba881a239a7a80c407b4055dca4e97d10a740d99c09b17651efbfedd61a4b
   languageName: node
   linkType: hard
 
@@ -1539,8 +1539,8 @@ __metadata:
   linkType: hard
 
 "vite@npm:^2.9.7":
-  version: 2.9.7
-  resolution: "vite@npm:2.9.7"
+  version: 2.9.8
+  resolution: "vite@npm:2.9.8"
   dependencies:
     esbuild: ^0.14.27
     fsevents: ~2.3.2
@@ -1563,7 +1563,7 @@ __metadata:
       optional: true
   bin:
     vite: bin/vite.js
-  checksum: d3d2a86855709e037d244c3066e785d7b700e41bf59ceb776818ea06ee2ed579055c10596ca883dd56de46b3654ec82da53369062013a012a1a60819dbb7c0ee
+  checksum: 7de3450bec4caa06f4540d1d252563ef0b7e1bdd167d04abf03db72cfd8c9a93879e18861283bc7d075e1d094b78b71770ca36f9b965bdf28c66665eafdc29dc
   languageName: node
   linkType: hard
 
