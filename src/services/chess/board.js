@@ -69,4 +69,8 @@ export default class Board {
 
     return fen;
   }
+
+  get pieceCount() {
+    return this.squares.filter((x) => x).length;
+  }
 }

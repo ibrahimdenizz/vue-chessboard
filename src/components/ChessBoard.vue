@@ -1,4 +1,5 @@
 <script>
+import { BLACK, DEFAULT_FEN, WHITE } from "@/constants/chess";
 import { ChessGame } from "@/services/chess";
 import BoardGround from "./BoardGround.vue";
 
@@ -6,16 +7,33 @@ export default {
   name: "ChessBoard",
   data() {
     return {
-      game: new ChessGame(),
       validMoves: [],
       selectedPiece: null,
     };
   },
   props: {
-    fen: String,
-    size: Number,
+    fen: {
+      type: String,
+      default: DEFAULT_FEN,
+    },
+    size: {
+      type: Number,
+      default: 800,
+    },
+    game: {
+      type: ChessGame,
+      default: new ChessGame(),
+    },
+    disableWhiteMoves: {
+      type: Boolean,
+      default: false,
+    },
+    disableBlackMoves: {
+      type: Boolean,
+      default: false,
+    },
   },
-  emits: ["update:fen"],
+  emits: ["update:fen", "onMovePlayed", "onGameOver"],
   components: {
     BoardGround,
   },
@@ -23,25 +41,43 @@ export default {
     fen(newFEN) {
       this.game.fen = newFEN;
     },
+    game() {
+      this.selectedPiece = null;
+      this.validMoves = [];
+    },
   },
   created() {
-    this.game.loadGameWithFen(this.fen);
+    this.game.loadGameWithFen(this.fen || DEFAULT_FEN);
   },
   methods: {
     isActivePiece(piece) {
+      if (this.disableWhiteMoves && this.game.currentPlayer === WHITE)
+        return false;
+      if (this.disableBlackMoves && this.game.currentPlayer === BLACK)
+        return false;
       return piece && piece.color === this.game.currentPlayer;
     },
     selectPiece(piece) {
       if (!this.isActivePiece(piece)) return;
       this.selectedPiece = piece;
       this.validMoves = this.game.getPieceMoves(piece);
-      console.log(this.validMoves);
     },
     makeMove(move) {
       this.game.makeMove(move);
       this.validMoves = [];
       this.selectedPiece = null;
       this.$emit("update:fen", this.game.fen);
+      this.$emit("onMovePlayed", { move, game: this.game });
+      console.log(this.game.gameOver);
+      if (this.game.gameOver)
+        this.$emit("onGameOver", { winner: this.game.winner, game: this.game });
+    },
+    getMoveStyle(move) {
+      return {
+        transform: `translate(${move.targetPosition.x * 100}%,${
+          move.targetPosition.y * 100
+        }% `,
+      };
     },
   },
 };
@@ -54,7 +90,7 @@ export default {
       :size="size"
       :fen="fen"
       @selectPiece="selectPiece"
-      @isActivePiece="isActivePiece"
+      :isActivePiece="isActivePiece"
     />
 
     <div class="board-positions valid-moves">
@@ -62,16 +98,7 @@ export default {
         v-for="(move, index) in validMoves"
         :key="index"
         class="valid-move"
-        :class="
-          move.targetPosition.x % 2 === move.targetPosition.y % 2
-            ? 'light'
-            : 'dark'
-        "
-        :style="{
-          transform: `translate(${move.targetPosition.x * 100}%,${
-            move.targetPosition.y * 100
-          }% `,
-        }"
+        :style="getMoveStyle(move)"
         @click="makeMove(move)"
       ></div>
     </div>
@@ -94,13 +121,6 @@ $light-color: #f0d9b5;
   width: 100%;
   height: 100%;
 
-  .piece {
-    z-index: 100;
-    width: 12.5%;
-    height: 12.5%;
-    position: absolute;
-  }
-
   .valid-move {
     z-index: 100;
     width: 12.5%;
@@ -108,15 +128,7 @@ $light-color: #f0d9b5;
     position: absolute;
     background-color: blue;
     opacity: 0.2;
-  }
-
-  .active-piece {
     cursor: pointer;
-  }
-
-  &.positions {
-    display: flex;
-    flex-wrap: wrap;
   }
 }
 </style>

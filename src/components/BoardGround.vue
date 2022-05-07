@@ -1,13 +1,14 @@
 <script>
 import { ChessGame } from "@/services/chess";
-import Piece from "./Piece.vue";
+import ChessPiece from "./ChessPiece.vue";
 
 export default {
-  name: "BoardGround",
+  name: "Board",
   props: {
     size: Number,
     fen: String,
     game: ChessGame,
+    isActivePiece: Function,
   },
   emits: ["selectPiece", "isActivePiece"],
   methods: {
@@ -15,7 +16,7 @@ export default {
       return this.game.getPiece(x, y);
     },
   },
-  components: { Piece },
+  components: { ChessPiece },
 };
 </script>
 
@@ -29,14 +30,10 @@ export default {
     >
       <div
         v-if="getPiece(x, y)"
-        :class="
-          $emit('isActivePiece', getPiece(x, y))
-            ? 'piece active-piece'
-            : 'piece'
-        "
+        :class="isActivePiece(getPiece(x, y)) ? 'piece active-piece' : 'piece'"
         @click="$emit('selectPiece', getPiece(x, y))"
       >
-        <piece :size="size" :piece="getPiece(x, y)" />
+        <chess-piece :size="size" :piece="getPiece(x, y)" />
       </div>
     </div>
   </template>

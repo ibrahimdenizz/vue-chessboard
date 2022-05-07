@@ -36,7 +36,7 @@ import BlackRook from "@/assets/chess-pieces/black/rook.vue";
 import Piece from "@/services/chess/pieces";
 
 export default {
-  name: "Piece",
+  name: "ChessPiece",
   components: {
     WhiteBishop,
     WhiteKing,
