@@ -61,7 +61,6 @@ export class ChessGame {
     this.moves = [];
     this.getLegalMoves();
     this.checkDoubleCheck();
-    console.log(this.moves, this.castling);
   }
 
   checkDoubleCheck() {
@@ -79,7 +78,6 @@ export class ChessGame {
           const captureOffsets = pieceCodeToCaptureOffsets[sq.type];
           if (sq.color != this.currentPlayer && offset in captureOffsets) {
             captureCount++;
-            console.log(sq);
           } /* capture from i to n */
           break;
         }
@@ -93,7 +91,6 @@ export class ChessGame {
         break;
       }
     }
-    console.log(captureCount);
   }
 
   getPiece(x, y = null) {
@@ -122,6 +119,9 @@ export class ChessGame {
     this.currentPlayer = this.currentPlayer === WHITE ? BLACK : WHITE;
 
     this.checkCastlingBeforeMove(move);
+    if (move.capture) {
+      this.board.squares[move.capture.index] = null;
+    }
 
     if (move.piece.type === pieceCode.pawn) {
       this.makePawnMove(move);
@@ -148,7 +148,7 @@ export class ChessGame {
   undoMove() {
     if (this.history.length > 1) {
       this.history.pop();
-      this.fen = this.history[this.history.length - 1];
+      this.fen = this.history.pop();
     }
   }
 
@@ -186,7 +186,7 @@ export class ChessGame {
   }
 
   loadGameWithFen(fen) {
-    this.fen = fen;
+    this.fen = fen ? fen : DEFAULT_FEN;
     this.buildMoves();
   }
 

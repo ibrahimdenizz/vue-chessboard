@@ -15,7 +15,7 @@ export default {
     fen: String,
     size: Number,
   },
-  emits: ["onFenChange"],
+  emits: ["update:fen"],
   components: {
     BoardGround,
   },
@@ -35,12 +35,13 @@ export default {
       if (!this.isActivePiece(piece)) return;
       this.selectedPiece = piece;
       this.validMoves = this.game.getPieceMoves(piece);
+      console.log(this.validMoves);
     },
     makeMove(move) {
       this.game.makeMove(move);
       this.validMoves = [];
       this.selectedPiece = null;
-      this.$emit("onFenChange", this.game.fen);
+      this.$emit("update:fen", this.game.fen);
     },
   },
 };

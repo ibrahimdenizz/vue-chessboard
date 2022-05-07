@@ -18,15 +18,11 @@ class Piece {
     this.color = color;
     this.code = code;
     this.setIsSlide(code);
-    this.img = require(`@/assets/chess-pieces/${this.color}/${this.pieceName}.svg`);
-    this.imgAlt = `${this.color} ${this.pieceName}`;
   }
 
   changePieceType(code) {
     this.code = code;
     this.setIsSlide(code);
-    this.imgUrl = `@/assets/chess-pieces/${this.color}/${this.pieceName}.svg`;
-    this.imgAlt = `${this.color} ${this.pieceName}`;
   }
 
   get type() {
@@ -64,7 +60,6 @@ class Piece {
   }
 
   equals(piece) {
-    console.log(piece.index, this.index);
     return piece.index === this.index;
   }
 }

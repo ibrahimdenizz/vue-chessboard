@@ -1,12 +1,14 @@
 // vite.config.js
-const path = require("path");
-const { defineConfig } = require("vite");
+import { defineConfig } from "vite";
+import vue from "@vitejs/plugin-vue";
 
-module.exports = defineConfig({
+var path = require("path");
+
+export default defineConfig({
   build: {
     lib: {
       entry: path.resolve(__dirname, "src/index.js"),
-      name: "vue-chess-board",
+      name: "vue-chessboard",
       fileName: (format) => `${format}.js`,
     },
     rollupOptions: {
@@ -22,4 +24,6 @@ module.exports = defineConfig({
       },
     },
   },
+  plugins: [vue()],
+  resolve: { alias: { "@": "/src" } },
 });
