@@ -86,7 +86,7 @@ export default class Move {
 
     for (const capture of captures) {
       if (capture && capture.color != piece.color) {
-        moveParams.targetIndex = validMoves[2];
+        moveParams.targetIndex = capture.index;
         moveParams.capture = capture;
         returnMoves.push(new Move(moveParams));
       }
