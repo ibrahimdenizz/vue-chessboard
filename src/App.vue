@@ -38,7 +38,7 @@ export default {
     const [width, height] = [window.innerWidth, window.innerHeight];
     return {
       chessBoardSize: width > height ? height * ratio : width * ratio,
-      fen: DEFAULT_FEN,
+      fen: "rnbqkbnr/pppppppp/8/8/5P2/8/PPPPP1PP/RNBQKBNR b KQkq f3 0 1",
       game: new ChessGame(),
       randomAI: new ChessAI({ type: "random" }),
       winner: null,
@@ -67,7 +67,7 @@ export default {
     onMovePlayed({ game }) {
       if (this.gameType === "random-ai")
         if (!game.gameOver && game.currentPlayer === "black") {
-          const move = this.randomAI.selectMove(game.moves);
+          const move = this.randomAI.selectMove(game.copy);
           game.makeMove(move);
           this.fen = game.fen;
         }
@@ -78,6 +78,17 @@ export default {
     changeGameType(type) {
       this.gameType = type;
       this.game = new ChessGame();
+    },
+    async playTwoAI() {
+      while (!this.game.gameOver) {
+        const move = this.randomAI.selectMove(this.game.copy);
+        this.game.makeMove(move);
+        this.fen = this.game.fen;
+        await this.sleep(500);
+      }
+    },
+    sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
     },
   },
 };

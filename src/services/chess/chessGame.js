@@ -10,10 +10,9 @@ import {
   mailbox,
   mailbox64,
   mailboxOffsets,
-} from "@/constants/chess";
-import Board from "./board";
-import Move from "./move";
-import { pieceCodeToCaptureOffsets } from "../../constants/chess";
+} from "@/constants/chess.js";
+import Board from "./board.js";
+import Move from "./move.js";
 
 export default class ChessGame {
   currentPlayer = WHITE;
@@ -35,22 +34,21 @@ export default class ChessGame {
 
   generatePseudoLegalMoves() {
     const pseudoMoves = [];
-    this.board.squares
-      .filter((piece) => piece && piece.color === this.currentPlayer)
-      .forEach((piece) => {
+    this.board.squares.forEach((piece) => {
+      if (piece && piece.color === this.currentPlayer)
         if (piece.type === pieceCode.pawn)
           pseudoMoves.push(...Move.generatePawnMoves(piece, this));
         else pseudoMoves.push(...Move.generatePieceMoves(piece, this));
-      });
+    });
     return pseudoMoves;
   }
 
   getLegalMoves() {
     const pseudoMoves = this.generatePseudoLegalMoves();
+    const currentPlayer = this.currentPlayer;
     for (const pseudoMove of pseudoMoves) {
       this._makeMove(pseudoMove);
-      const opponentMoves = this.generatePseudoLegalMoves();
-      if (!opponentMoves.find((move) => move.isCheck)) {
+      if (!this.inCheck(currentPlayer)) {
         this.moves.push(pseudoMove);
       }
       this.undoMove();
@@ -109,11 +107,27 @@ export default class ChessGame {
     }
   }
 
+  generateHistory(move) {
+    this.history.push({
+      move: move,
+      castling: {
+        [WHITE]: this.castling[WHITE],
+        [BLACK]: this.castling[BLACK],
+      },
+      enPassantIndex: this.enPassantIndex,
+      halfMoveCount: this.halfMoveCount,
+      moveCount: this.moveCount,
+      currentPlayer: this.currentPlayer,
+    });
+  }
+
   _makeMove(move) {
+    this.generateHistory(move);
+
     this.board.squares[move.startIndex] = null;
     this.enPassantIndex = move.enPassant ? move.targetIndex : null;
     if (this.currentPlayer === BLACK) this.moveCount++;
-    this.currentPlayer = this.currentPlayer === WHITE ? BLACK : WHITE;
+    this.currentPlayer = this.opponentColor;
 
     this.checkCastlingBeforeMove(move);
     if (move.capture) {
@@ -125,7 +139,7 @@ export default class ChessGame {
     } else if (move.castling) {
       this.makeCastlingMove(move);
     } else {
-      const piece = move.piece.copy;
+      const piece = move.piece;
       piece.index = move.targetIndex;
       this.board.squares[move.targetIndex] = piece;
     }
@@ -133,8 +147,6 @@ export default class ChessGame {
     if (move.piece.type === pieceCode.pawn || move.capture)
       this.halfMoveCount = 0;
     else this.halfMoveCount++;
-
-    this.history.push(this.fen);
   }
 
   makeMove(move) {
@@ -143,9 +155,43 @@ export default class ChessGame {
   }
 
   undoMove() {
-    if (this.history.length > 1) {
-      this.history.pop();
-      this.fen = this.history.pop();
+    if (this.history.length > 0) {
+      const old = this.history.pop();
+      const move = old.move;
+      const capture = move.capture;
+      const piece = move.piece;
+
+      this.castling = old.castling;
+      this.enPassantIndex = old.enPassantIndex;
+      this.halfMoveCount = old.halfMoveCount;
+      this.moveCount = old.moveCount;
+      this.currentPlayer = old.currentPlayer;
+
+      piece.index = move.startIndex;
+      this.board.squares[move.startIndex] = piece;
+      this.board.squares[move.targetIndex] = null;
+
+      if (move.capture) {
+        this.board.squares[capture.index] = capture;
+      }
+
+      if (move.castling) {
+        let rookStartIndex, rookEndIndex;
+
+        if (move.castling & K_SIDE_CASTLE) {
+          rookStartIndex = rookSides[piece.color].k;
+          rookEndIndex = rookStartIndex - 2;
+        } else if (move.castling & Q_SIDE_CASTLE) {
+          rookStartIndex = rookSides[piece.color].q;
+          rookEndIndex = rookStartIndex + 3;
+        }
+
+        const rook = this.getPiece(rookEndIndex);
+        rook.index = rookStartIndex;
+
+        this.board.squares[rookEndIndex] = null;
+        this.board.squares[rookStartIndex] = rook;
+      }
     }
   }
 
@@ -187,10 +233,10 @@ export default class ChessGame {
     this.buildMoves();
   }
 
-  inCheck() {
+  inCheck(color = this.currentPlayer) {
     const offsets = mailboxOffsets.k;
     for (const offset of offsets) {
-      let index = this.board.kings[this.currentPlayer].index;
+      let index = this.board.kings[color].index;
       index = mailbox[mailbox64[index] + offset];
       while (index != -1) {
         const sq = this.getPiece(index);
@@ -198,19 +244,7 @@ export default class ChessGame {
           let captureOffsets = mailboxOffsets[sq.type];
           if (sq.type === pieceCode.pawn)
             captureOffsets = captureOffsets[sq.color];
-          console.log(
-            sq.color,
-            this.currentPlayer,
-            offset,
-            captureOffsets,
-            sq.type,
-            sq.color !== this.currentPlayer,
-            captureOffsets.includes(offset)
-          );
-          if (
-            sq.color !== this.currentPlayer &&
-            captureOffsets.includes(offset)
-          ) {
+          if (sq.color !== color && captureOffsets.includes(offset)) {
             return true;
           }
           break;
@@ -222,13 +256,37 @@ export default class ChessGame {
     return false;
   }
 
+  perft(depth) {
+    if (depth === 1)
+      return {
+        count: this.moves.length,
+        captures: this.moves.filter((x) => x.capture).length,
+        fens: [this.fen],
+      };
+
+    let totalMove = 0;
+    let captures = 0;
+    for (const move of this.moves) {
+      this.makeMove(move);
+      const perft = this.perft(depth - 1);
+      totalMove += perft.count;
+      captures += perft.captures;
+      this.undoMove();
+    }
+
+    return { count: totalMove, captures };
+  }
+
+  get opponentColor() {
+    return this.currentPlayer === WHITE ? BLACK : WHITE;
+  }
+
   get gameOver() {
     return !this.moves.length || this.board.pieceCount === 2;
   }
 
   get winner() {
     if (this.gameOver) {
-      console.log(this.inCheck(), this.currentPlayer);
       if (this.inCheck()) {
         return this.currentPlayer === WHITE ? BLACK : WHITE;
       } else {
@@ -244,6 +302,7 @@ export default class ChessGame {
       this.enPassantIndex = null;
     } else {
       const [char, num] = value.split("");
+
       this.enPassantIndex = (parseInt(num) - 1) * 8 + (char.charCodeAt(0) - 97);
     }
   }
@@ -289,7 +348,7 @@ export default class ChessGame {
     if (this.enPassantIndex === null) return "-";
     else {
       const char = (this.enPassantIndex % 8) + 97;
-      const num = parseInt(this.enPassantIndex / 8) + 1;
+      const num = 8 - parseInt(this.enPassantIndex / 8);
       return `${String.fromCharCode(char)}${num}`;
     }
   }
@@ -302,10 +361,15 @@ export default class ChessGame {
     this.enPassant = split_fen[3];
     this.halfMoveCount = parseInt(split_fen[4]);
     this.moveCount = parseInt(split_fen[5]);
-    this.history.push(fen);
   }
 
   get fen() {
     return `${this.board.fenPosition} ${this.fenTurn} ${this.fenCastling} ${this.fenEnPassant} ${this.halfMoveCount} ${this.moveCount}`;
+  }
+
+  get copy() {
+    const copyGame = new ChessGame(this.fen);
+    copyGame.history = this.history.slice();
+    return copyGame;
   }
 }
