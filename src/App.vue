@@ -45,11 +45,11 @@ export default {
     const [width, height] = [window.innerWidth, window.innerHeight];
     return {
       chessBoardSize: width > height ? height * ratio : width * ratio,
-      fen: "",
+      fen: "rn1k1bnr/1p3pp1/p7/2p4p/2P5/7b/PP1P1PPP/RNBQKBNR/ w KQ - 0 7",
       game: new ChessGame(),
       randomAI: new ChessAI({ type: "random" }),
       winner: null,
-      gameType: "two-player",
+      gameType: "random-ai",
     };
   },
   components: {
