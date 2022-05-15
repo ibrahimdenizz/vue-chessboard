@@ -10,6 +10,7 @@ import {
   mailbox,
   mailbox64,
   mailboxOffsets,
+  mailboxKingCheckOffsets,
 } from "@/constants/chess.js";
 import Board from "./board.js";
 import Move from "./move.js";
@@ -71,7 +72,10 @@ export default class ChessGame {
         const sq = this.getPiece(index);
         if (sq != null) {
           const captureOffsets = mailboxOffsets[sq.type];
-          if (sq.color != this.currentPlayer && offset in captureOffsets) {
+          if (
+            sq.color != this.currentPlayer &&
+            captureOffsets.includes(offset)
+          ) {
             captureCount++;
           }
           break;
@@ -233,8 +237,36 @@ export default class ChessGame {
     this.buildMoves();
   }
 
-  inCheck(color = this.currentPlayer) {
+  inKnightCheck(color = this.currentPlayer) {
+    for (const knightOffsets of mailboxKingCheckOffsets.n) {
+      let index = this.board.kings[color].index;
+      index = mailbox[mailbox64[index] + knightOffsets];
+      const sq = this.getPiece(index);
+      if (sq && sq.type === pieceCode.knight && sq.color !== color) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  inPawnCheck(color) {
+    const opponentColor = this.getOpponentColor(color);
+
+    for (const pawnOffsets of mailboxKingCheckOffsets.p[opponentColor]) {
+      let index = this.board.kings[color].index;
+      index = mailbox[mailbox64[index] + pawnOffsets];
+      const sq = this.getPiece(index);
+      if (sq && sq.type === pieceCode.pawn && sq.color !== color) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  inSlidingCheck(color) {
     const offsets = mailboxOffsets.k;
+
     for (const offset of offsets) {
       let index = this.board.kings[color].index;
       index = mailbox[mailbox64[index] + offset];
@@ -242,18 +274,30 @@ export default class ChessGame {
         const sq = this.getPiece(index);
         if (sq != null) {
           let captureOffsets = mailboxOffsets[sq.type];
-          if (sq.type === pieceCode.pawn)
-            captureOffsets = captureOffsets[sq.color];
-          if (sq.color !== color && captureOffsets.includes(offset)) {
+
+          if (
+            sq.isSlide &&
+            sq.color !== color &&
+            captureOffsets.includes(offset)
+          )
             return true;
-          }
+
           break;
         }
 
         index = mailbox[mailbox64[index] + offset];
       }
     }
+
     return false;
+  }
+
+  inCheck(color = this.currentPlayer) {
+    return (
+      this.inKnightCheck(color) ||
+      this.inPawnCheck(color) ||
+      this.inSlidingCheck(color)
+    );
   }
 
   perft(depth) {
@@ -275,6 +319,10 @@ export default class ChessGame {
     }
 
     return { count: totalMove, captures };
+  }
+
+  getOpponentColor(color) {
+    return color === WHITE ? BLACK : WHITE;
   }
 
   get opponentColor() {

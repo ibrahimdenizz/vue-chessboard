@@ -108,7 +108,16 @@ export const mailboxOffsets = {
   q: [-11, -10, -9, -1, 1, 9, 10, 11] /* QUEEN */,
   k: [-11, -10, -9, -1, 1, 9, 10, 11] /* KING */,
   p: {
-    [WHITE]: [-11, -9],
-    [BLACK]: [9, 11],
-  } /* KING */,
+    [WHITE]: [11, 9],
+    [BLACK]: [-9, -11],
+  },
+};
+
+export const mailboxKingCheckOffsets = {
+  s: [-11, -10, -9, -1, 1, 9, 10, 11],
+  n: [-21, -19, -12, -8, 8, 12, 19, 21],
+  p: {
+    [WHITE]: [11, 9],
+    [BLACK]: [-9, -11],
+  },
 };

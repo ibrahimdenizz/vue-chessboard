@@ -38,7 +38,7 @@ export default {
     const [width, height] = [window.innerWidth, window.innerHeight];
     return {
       chessBoardSize: width > height ? height * ratio : width * ratio,
-      fen: "rnbqkbnr/pppppppp/8/8/5P2/8/PPPPP1PP/RNBQKBNR b KQkq f3 0 1",
+      fen: "",
       game: new ChessGame(),
       randomAI: new ChessAI({ type: "random" }),
       winner: null,
