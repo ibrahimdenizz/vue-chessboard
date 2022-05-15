@@ -6,6 +6,13 @@
   >
     Winner: {{ winner }}
   </p>
+  <p
+    :style="{
+      'text-align': 'center',
+    }"
+  >
+    Fen: {{ fen }}
+  </p>
   <div class="home">
     <chess-board
       :size="chessBoardSize"
