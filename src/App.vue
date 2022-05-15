@@ -28,6 +28,7 @@
       <button class="btn" @click="changeGameType('random-ai')">
         Random AI
       </button>
+      <button class="btn" @click="playTwoAI()">Two Random AI</button>
     </div>
   </div>
 </template>
@@ -50,6 +51,7 @@ export default {
       randomAI: new ChessAI({ type: "random" }),
       winner: null,
       gameType: "random-ai",
+      isPlayTwoAI: false,
     };
   },
   components: {
@@ -83,15 +85,17 @@ export default {
       this.winner = winner;
     },
     changeGameType(type) {
+      this.isPlayTwoAI = false;
       this.gameType = type;
       this.game = new ChessGame();
     },
     async playTwoAI() {
-      while (!this.game.gameOver) {
+      this.isPlayTwoAI = true;
+      while (!this.game.gameOver && this.isPlayTwoAI) {
         const move = this.randomAI.selectMove(this.game.copy);
         this.game.makeMove(move);
-        this.fen = this.game.fen;
-        await this.sleep(500);
+        console.log(this.game.moves);
+        await this.sleep(300);
       }
     },
     sleep(ms) {

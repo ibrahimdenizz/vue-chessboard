@@ -40,10 +40,11 @@ export default {
   },
   watch: {
     fen(newFEN) {
-      if (this.game.fen !== newFEN) this.game.loadGameWithFen(newFEN);
+      console.log(this.game.moves);
+      if (newFEN && this.game.fen !== newFEN) this.game.loadGameWithFen(newFEN);
     },
     "game.fen": {
-      handler() {
+      handler(newFen) {
         this.render = !this.render;
       },
     },
@@ -74,9 +75,10 @@ export default {
       this.selectedPiece = null;
       this.$emit("update:fen", this.game.fen);
       this.$emit("onMovePlayed", { move, game: this.game });
-      console.log(this.game.gameOver);
       if (this.game.gameOver)
         this.$emit("onGameOver", { winner: this.game.winner, game: this.game });
+
+      console.log(this.game.moves.filter((x) => x.capture).length);
     },
     getMoveStyle(move) {
       return {

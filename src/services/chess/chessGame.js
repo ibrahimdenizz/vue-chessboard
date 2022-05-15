@@ -35,12 +35,13 @@ export default class ChessGame {
 
   generatePseudoLegalMoves() {
     const pseudoMoves = [];
-    this.board.squares.forEach((piece) => {
-      if (piece && piece.color === this.currentPlayer)
+    for (const piece of this.board.squares) {
+      if (piece && piece.color === this.currentPlayer) {
         if (piece.type === pieceCode.pawn)
           pseudoMoves.push(...Move.generatePawnMoves(piece, this));
         else pseudoMoves.push(...Move.generatePieceMoves(piece, this));
-    });
+      }
+    }
     return pseudoMoves;
   }
 
@@ -59,7 +60,6 @@ export default class ChessGame {
   buildMoves() {
     this.moves = [];
     this.getLegalMoves();
-    this.checkDoubleCheck();
   }
 
   checkDoubleCheck() {
@@ -321,20 +321,18 @@ export default class ChessGame {
   }
 
   perft(depth) {
-    if (depth === 1)
-      return {
-        count: this.moves.length,
-        captures: this.moves.filter((x) => x.capture).length,
-        fens: [this.fen],
-      };
-
     let totalMove = 0;
     let captures = 0;
-    for (const move of this.moves) {
-      this.makeMove(move);
-      const perft = this.perft(depth - 1);
-      totalMove += perft.count;
-      captures += perft.captures;
+    const moves = this.generatePseudoLegalMoves();
+    for (const move of moves) {
+      this._makeMove(move);
+      if (!this.inCheck()) {
+        if (depth - 1 > 0) {
+          const perft = this.perft(depth - 1);
+          totalMove += perft.count;
+          captures += perft.captures;
+        } else totalMove++;
+      }
       this.undoMove();
     }
 
@@ -350,7 +348,9 @@ export default class ChessGame {
   }
 
   get gameOver() {
-    return !this.moves.length || this.board.pieceCount === 2;
+    return (
+      (this.inCheck() && !this.moves.length) || this.board.pieceCount === 2
+    );
   }
 
   get winner() {

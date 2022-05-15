@@ -14,6 +14,11 @@ export const rookSides = {
   },
 };
 
+export const secondRowsWithColor = {
+  [WHITE]: 6,
+  [BLACK]: 1,
+};
+
 export const pieceNameToCode = {
   black: {
     king: "k",
@@ -108,8 +113,8 @@ export const mailboxOffsets = {
   q: [-11, -10, -9, -1, 1, 9, 10, 11] /* QUEEN */,
   k: [-11, -10, -9, -1, 1, 9, 10, 11] /* KING */,
   p: {
-    [WHITE]: [11, 9],
-    [BLACK]: [-9, -11],
+    [WHITE]: [-11, -9],
+    [BLACK]: [9, 11],
   },
 };
 

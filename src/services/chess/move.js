@@ -5,10 +5,9 @@ import {
   mailboxOffsets,
   pieceCode,
   Q_SIDE_CASTLE,
+  secondRowsWithColor,
   WHITE,
 } from "@/constants/chess";
-import { ChessGame } from ".";
-import Piece from "./pieces";
 
 export default class Move {
   piece = null;
@@ -58,7 +57,7 @@ export default class Move {
 
   static generatePawnMoves(piece, chess) {
     const validMoves = piece.moveOffsets.map((offset) => offset + piece.index);
-    const firstRow = piece.color === WHITE ? 6 : 1;
+    const secondRow = secondRowsWithColor[piece.color];
     const returnMoves = [];
 
     const moveParams = {
@@ -71,7 +70,7 @@ export default class Move {
     if (!chess.getPiece(validMoves[0])) {
       returnMoves.push(new Move(moveParams));
 
-      if (piece.position.y === firstRow && !chess.getPiece(validMoves[1])) {
+      if (piece.position.y === secondRow && !chess.getPiece(validMoves[1])) {
         moveParams.targetIndex = validMoves[1];
         moveParams.enPassant = true;
         returnMoves.push(new Move(moveParams));
@@ -79,31 +78,26 @@ export default class Move {
       }
     }
 
-    const captures = [
-      chess.getPiece(validMoves[2]),
-      chess.getPiece(validMoves[3]),
-    ];
+    for (const offset of mailboxOffsets.p[piece.color]) {
+      let index = piece.index;
+      index = mailbox[mailbox64[index] + offset];
+      if (index !== -1) {
+        const enPassantCaptureIndex =
+          offset < 0 ? chess.enPassantIndex - 8 : chess.enPassantIndex + 8;
 
-    for (const capture of captures) {
-      if (capture && capture.color != piece.color) {
-        moveParams.targetIndex = capture.index;
-        moveParams.capture = capture;
-        returnMoves.push(new Move(moveParams));
+        const capture = chess.getPiece(index);
+
+        if (capture && capture.color != piece.color) {
+          moveParams.targetIndex = capture.index;
+          moveParams.capture = capture;
+          returnMoves.push(new Move(moveParams));
+        } else if (index === enPassantCaptureIndex) {
+          const enPassantPiece = chess.getPiece(chess.enPassantIndex);
+          moveParams.capture = enPassantPiece;
+          moveParams.targetIndex = enPassantCaptureIndex;
+          returnMoves.push(new Move(moveParams));
+        }
       }
-    }
-
-    const enPassantIndexes = [piece.index - 1, piece.index + 1];
-
-    const validEnPassantIndex = enPassantIndexes.find(
-      (x) => x === chess.enPassantIndex
-    );
-
-    if (validEnPassantIndex) {
-      const enPassantPiece = chess.getPiece(validEnPassantIndex);
-      moveParams.capture = enPassantPiece;
-      moveParams.targetIndex =
-        validEnPassantIndex === piece.index - 1 ? validMoves[3] : validMoves[2];
-      returnMoves.push(new Move(moveParams));
     }
 
     return returnMoves;
@@ -156,16 +150,16 @@ export default class Move {
     const moveParams = {
       piece,
     };
+    const index = piece.index;
 
     if (chess.castling[piece.color] & K_SIDE_CASTLE) {
-      let index = piece.index;
-      let sq;
-      do {
-        index++;
-        sq = chess.getPiece(index);
-      } while (!sq);
-
-      if (sq.type == pieceCode.rook) {
+      if (
+        !chess.getPiece(index + 1) &&
+        !chess.getPiece(index + 2) &&
+        !chess.inCheck() &&
+        !chess.inAttack(index + 1, piece.color) &&
+        !chess.inAttack(index + 2, piece.color)
+      ) {
         moveParams.castling = K_SIDE_CASTLE;
         moveParams.targetIndex = piece.index + 2;
         returnMoves.push(new Move(moveParams));
@@ -173,14 +167,15 @@ export default class Move {
     }
 
     if (chess.castling[piece.color] & Q_SIDE_CASTLE) {
-      let index = piece.index;
-      let sq;
-      do {
-        index--;
-        sq = chess.getPiece(index);
-      } while (!sq);
-
-      if (sq.type == pieceCode.rook) {
+      if (
+        !chess.getPiece(index - 1) &&
+        !chess.getPiece(index - 2) &&
+        !chess.getPiece(index - 3) &&
+        !chess.inCheck() &&
+        !chess.inAttack(index - 1, piece.color) &&
+        !chess.inAttack(index - 2, piece.color) &&
+        !chess.inAttack(index - 3, piece.color)
+      ) {
         moveParams.castling = Q_SIDE_CASTLE;
         moveParams.targetIndex = piece.index - 2;
         returnMoves.push(new Move(moveParams));
