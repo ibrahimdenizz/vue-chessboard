@@ -9,6 +9,7 @@ export default {
     return {
       validMoves: [],
       selectedPiece: null,
+      render: false,
     };
   },
   props: {
@@ -39,7 +40,12 @@ export default {
   },
   watch: {
     fen(newFEN) {
-      this.game.fen = newFEN;
+      if (this.game.fen !== newFEN) this.game.loadGameWithFen(newFEN);
+    },
+    "game.fen": {
+      handler() {
+        this.render = !this.render;
+      },
     },
     game() {
       this.selectedPiece = null;

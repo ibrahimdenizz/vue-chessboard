@@ -113,7 +113,7 @@ export const mailboxOffsets = {
   },
 };
 
-export const mailboxKingCheckOffsets = {
+export const mailboxKingAttackOffsets = {
   k: [-11, -10, -9, -1, 1, 9, 10, 11],
   n: [-21, -19, -12, -8, 8, 12, 19, 21],
   p: {

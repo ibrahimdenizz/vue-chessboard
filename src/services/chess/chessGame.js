@@ -10,7 +10,7 @@ import {
   mailbox,
   mailbox64,
   mailboxOffsets,
-  mailboxKingCheckOffsets,
+  mailboxKingAttackOffsets,
 } from "@/constants/chess.js";
 import Board from "./board.js";
 import Move from "./move.js";
@@ -162,6 +162,7 @@ export default class ChessGame {
   undoMove() {
     if (this.history.length > 0) {
       const old = this.history.pop();
+
       const move = old.move;
       const capture = move.capture;
       const piece = move.piece;
@@ -238,9 +239,9 @@ export default class ChessGame {
     this.buildMoves();
   }
 
-  inKnightCheck(color = this.currentPlayer) {
-    for (const knightOffset of mailboxKingCheckOffsets.n) {
-      let index = this.board.kings[color].index;
+  inKnightAttack(_index, color) {
+    for (const knightOffset of mailboxKingAttackOffsets.n) {
+      let index = _index;
       index = mailbox[mailbox64[index] + knightOffset];
       const sq = this.getPiece(index);
       if (sq && sq.type === pieceCode.knight && sq.color !== color) {
@@ -250,11 +251,11 @@ export default class ChessGame {
     return false;
   }
 
-  inPawnCheck(color) {
+  inPawnAttack(_index, color) {
     const opponentColor = this.getOpponentColor(color);
 
-    for (const pawnOffset of mailboxKingCheckOffsets.p[opponentColor]) {
-      let index = this.board.kings[color].index;
+    for (const pawnOffset of mailboxKingAttackOffsets.p[opponentColor]) {
+      let index = _index;
       index = mailbox[mailbox64[index] + pawnOffset];
       const sq = this.getPiece(index);
       if (sq && sq.type === pieceCode.pawn && sq.color !== color) {
@@ -265,9 +266,9 @@ export default class ChessGame {
     return false;
   }
 
-  inKingCheck(color) {
-    for (const kingOffset of mailboxKingCheckOffsets.k) {
-      let index = this.board.kings[color].index;
+  inKingAttack(_index, color) {
+    for (const kingOffset of mailboxKingAttackOffsets.k) {
+      let index = _index;
       index = mailbox[mailbox64[index] + kingOffset];
       const sq = this.getPiece(index);
       if (sq && sq.type === pieceCode.king && sq.color !== color) {
@@ -278,11 +279,11 @@ export default class ChessGame {
     return false;
   }
 
-  inSlidingCheck(color) {
+  inSlidingAttack(_index, color) {
     const offsets = mailboxOffsets.k;
 
     for (const offset of offsets) {
-      let index = this.board.kings[color].index;
+      let index = _index;
       index = mailbox[mailbox64[index] + offset];
       while (index != -1) {
         const sq = this.getPiece(index);
@@ -306,13 +307,17 @@ export default class ChessGame {
     return false;
   }
 
-  inCheck(color = this.currentPlayer) {
+  inAttack(index, color) {
     return (
-      this.inKnightCheck(color) ||
-      this.inPawnCheck(color) ||
-      this.inSlidingCheck(color) ||
-      this.inKingCheck(color)
+      this.inKnightAttack(index, color) ||
+      this.inPawnAttack(index, color) ||
+      this.inSlidingAttack(index, color) ||
+      this.inKingAttack(index, color)
     );
+  }
+
+  inCheck(color = this.currentPlayer) {
+    return this.inAttack(this.board.kings[color].index, color);
   }
 
   perft(depth) {
@@ -424,7 +429,6 @@ export default class ChessGame {
     this.enPassant = split_fen[3];
     this.halfMoveCount = parseInt(split_fen[4]);
     this.moveCount = parseInt(split_fen[5]);
-    this.buildMoves();
   }
 
   get fen() {
