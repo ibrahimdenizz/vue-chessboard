@@ -73,6 +73,7 @@ export default class ChessGame {
         if (sq != null) {
           const captureOffsets = mailboxOffsets[sq.type];
           if (
+            sq.isSlide &&
             sq.color != this.currentPlayer &&
             captureOffsets.includes(offset)
           ) {
