@@ -266,8 +266,6 @@ export default class ChessGame {
   }
 
   inKingCheck(color) {
-    const opponentColor = this.getOpponentColor(color);
-
     for (const kingOffset of mailboxKingCheckOffsets.k) {
       let index = this.board.kings[color].index;
       index = mailbox[mailbox64[index] + kingOffset];
@@ -426,6 +424,7 @@ export default class ChessGame {
     this.enPassant = split_fen[3];
     this.halfMoveCount = parseInt(split_fen[4]);
     this.moveCount = parseInt(split_fen[5]);
+    this.buildMoves();
   }
 
   get fen() {
