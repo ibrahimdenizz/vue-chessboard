@@ -34,15 +34,15 @@ export default class ChessGame {
   }
 
   generatePseudoLegalMoves() {
-    const pseudoMoves = [];
+    const moves = [];
     for (const piece of this.board.squares) {
       if (piece && piece.color === this.currentPlayer) {
         if (piece.type === pieceCode.pawn)
-          pseudoMoves.push(...Move.generatePawnMoves(piece, this));
-        else pseudoMoves.push(...Move.generatePieceMoves(piece, this));
+          Move.generatePawnMoves(piece, this, moves);
+        else Move.generatePieceMoves(piece, this, moves);
       }
     }
-    return pseudoMoves;
+    return moves;
   }
 
   getLegalMoves() {
@@ -139,13 +139,14 @@ export default class ChessGame {
       this.board.squares[move.capture.index] = null;
     }
 
+    const piece = move.piece;
+    piece.index = move.targetIndex;
+
     if (move.piece.type === pieceCode.pawn) {
       this.makePawnMove(move);
     } else if (move.castling) {
       this.makeCastlingMove(move);
     } else {
-      const piece = move.piece;
-      piece.index = move.targetIndex;
       this.board.squares[move.targetIndex] = piece;
     }
 
@@ -202,11 +203,12 @@ export default class ChessGame {
   }
 
   makeCastlingMove(move) {
-    const piece = move.piece.copy;
+    const piece = move.piece;
 
     if (move.castling & K_SIDE_CASTLE) {
       this.board.squares[piece.index + 2] = piece;
       const rook = this.getPiece(rookSides[piece.color].k);
+      console.log(this.board.squares);
       this.board.squares[rook.index] = null;
       this.board.squares[rook.index - 2] = rook;
       rook.index -= 2;
@@ -224,7 +226,7 @@ export default class ChessGame {
   }
 
   makePawnMove(move) {
-    const piece = move.piece.copy;
+    const piece = move.piece;
     piece.index = move.targetIndex;
 
     if (move.isTargetLastFile) {
@@ -331,7 +333,10 @@ export default class ChessGame {
           const perft = this.perft(depth - 1);
           totalMove += perft.count;
           captures += perft.captures;
-        } else totalMove++;
+        } else {
+          totalMove++;
+          if (move.capture) captures++;
+        }
       }
       this.undoMove();
     }
@@ -348,9 +353,7 @@ export default class ChessGame {
   }
 
   get gameOver() {
-    return (
-      (this.inCheck() && !this.moves.length) || this.board.pieceCount === 2
-    );
+    return !this.moves.length || this.board.pieceCount === 2;
   }
 
   get winner() {

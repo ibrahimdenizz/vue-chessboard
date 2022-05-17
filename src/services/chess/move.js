@@ -4,10 +4,11 @@ import {
   mailbox64,
   mailboxOffsets,
   pieceCode,
+  pieceCodeToMoveOffsets,
   Q_SIDE_CASTLE,
   secondRowsWithColor,
   WHITE,
-} from "@/constants/chess";
+} from "@/constants/chess.js";
 
 export default class Move {
   piece = null;
@@ -55,10 +56,11 @@ export default class Move {
     else return this.targetPosition.y === 7;
   }
 
-  static generatePawnMoves(piece, chess) {
-    const validMoves = piece.moveOffsets.map((offset) => offset + piece.index);
+  static generatePawnMoves(piece, chess, moves) {
+    const validMoves = pieceCodeToMoveOffsets[piece.type][piece.color].map(
+      (offset) => offset + piece.index
+    );
     const secondRow = secondRowsWithColor[piece.color];
-    const returnMoves = [];
 
     const moveParams = {
       piece,
@@ -68,12 +70,12 @@ export default class Move {
     if (!this.isIndexValid(validMoves[0])) return [];
 
     if (!chess.getPiece(validMoves[0])) {
-      returnMoves.push(new Move(moveParams));
+      moves.push(new Move(moveParams));
 
       if (piece.position.y === secondRow && !chess.getPiece(validMoves[1])) {
         moveParams.targetIndex = validMoves[1];
         moveParams.enPassant = true;
-        returnMoves.push(new Move(moveParams));
+        moves.push(new Move(moveParams));
         moveParams.enPassant = false;
       }
     }
@@ -90,26 +92,24 @@ export default class Move {
         if (capture && capture.color != piece.color) {
           moveParams.targetIndex = capture.index;
           moveParams.capture = capture;
-          returnMoves.push(new Move(moveParams));
+          moves.push(new Move(moveParams));
         } else if (index === enPassantCaptureIndex) {
           const enPassantPiece = chess.getPiece(chess.enPassantIndex);
           moveParams.capture = enPassantPiece;
           moveParams.targetIndex = enPassantCaptureIndex;
-          returnMoves.push(new Move(moveParams));
+          moves.push(new Move(moveParams));
         }
       }
     }
-
-    return returnMoves;
   }
 
-  static generatePieceMoves(piece, chess) {
-    const returnMoves = [];
+  static generatePieceMoves(piece, chess, moves) {
     const offsets = mailboxOffsets[piece.type];
     const moveParams = {
       piece,
       capture: null,
     };
+
     for (const offset of offsets) {
       /* for all knight or ray directions */
       let index = piece.index;
@@ -122,14 +122,14 @@ export default class Move {
           if (sq.color != piece.color) {
             moveParams.capture = sq;
             moveParams.targetIndex = index;
-            returnMoves.push(new Move(moveParams));
+            moves.push(new Move(moveParams));
             moveParams.capture = null;
           } /* capture from i to n */
           break;
         }
 
         moveParams.targetIndex = index;
-        returnMoves.push(new Move(moveParams)); /* quiet move from i to n */
+        moves.push(new Move(moveParams)); /* quiet move from i to n */
 
         if (!piece.isSlide) break; /* next direction */
 
@@ -139,14 +139,11 @@ export default class Move {
 
     // castling
     if (piece.type === pieceCode.king) {
-      returnMoves.push(...this.generateCastleMoves(piece, chess));
+      this.generateCastleMoves(piece, chess, moves);
     }
-
-    return returnMoves;
   }
 
-  static generateCastleMoves(piece, chess) {
-    const returnMoves = [];
+  static generateCastleMoves(piece, chess, moves) {
     const moveParams = {
       piece,
     };
@@ -162,7 +159,7 @@ export default class Move {
       ) {
         moveParams.castling = K_SIDE_CASTLE;
         moveParams.targetIndex = piece.index + 2;
-        returnMoves.push(new Move(moveParams));
+        moves.push(new Move(moveParams));
       }
     }
 
@@ -178,11 +175,9 @@ export default class Move {
       ) {
         moveParams.castling = Q_SIDE_CASTLE;
         moveParams.targetIndex = piece.index - 2;
-        returnMoves.push(new Move(moveParams));
+        moves.push(new Move(moveParams));
       }
     }
-
-    return returnMoves;
   }
 
   static isIndexValid(index) {
