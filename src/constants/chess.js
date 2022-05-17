@@ -126,3 +126,18 @@ export const mailboxKingAttackOffsets = {
     [BLACK]: [-9, -11],
   },
 };
+
+// AI constants
+
+export const Coefficients = {
+  k: 200,
+  q: 9,
+  r: 5,
+  b: 3,
+  n: 3,
+  p: 1,
+  P_ISSUES: 0.5, // Doubled, blocked and isolated pawns. Maybe later,
+  LEGAL_MOVES: 0.1, // Number of legal moves. Maybe later
+  [WHITE]: 1,
+  [BLACK]: -1,
+};

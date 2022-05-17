@@ -1,9 +1,4 @@
-import {
-  pieceCode,
-  pieceCodeToMoveOffsets,
-  pieceCodeToName,
-  WHITE,
-} from "@/constants/chess";
+import { pieceCode, pieceCodeToName, WHITE } from "@/constants/chess";
 
 class Piece {
   index = 0;

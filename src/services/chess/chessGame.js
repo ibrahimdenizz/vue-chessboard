@@ -208,7 +208,6 @@ export default class ChessGame {
     if (move.castling & K_SIDE_CASTLE) {
       this.board.squares[piece.index + 2] = piece;
       const rook = this.getPiece(rookSides[piece.color].k);
-      console.log(this.board.squares);
       this.board.squares[rook.index] = null;
       this.board.squares[rook.index - 2] = rook;
       rook.index -= 2;
@@ -346,6 +345,10 @@ export default class ChessGame {
 
   getOpponentColor(color) {
     return color === WHITE ? BLACK : WHITE;
+  }
+
+  get board64Arr() {
+    return this.board.squares;
   }
 
   get opponentColor() {

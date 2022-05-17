@@ -28,7 +28,9 @@
       <button class="btn" @click="changeGameType('random-ai')">
         Random AI
       </button>
-      <button class="btn" @click="playTwoAI()">Two Random AI</button>
+      <button class="btn" @click="changeGameType('normal-ai')">
+        Normal AI
+      </button>
     </div>
   </div>
 </template>
@@ -44,13 +46,15 @@ export default {
   name: "App",
   data() {
     const [width, height] = [window.innerWidth, window.innerHeight];
+    const game = new ChessGame();
     return {
       chessBoardSize: width > height ? height * ratio : width * ratio,
       fen: "",
-      game: new ChessGame(),
+      game,
       randomAI: new ChessAI({ type: "random" }),
+      normalAI: new ChessAI({ type: "normal" }),
       winner: null,
-      gameType: "random-ai",
+      gameType: "normal-ai",
       isPlayTwoAI: false,
     };
   },
@@ -74,12 +78,19 @@ export default {
       this.chessBoardSize = width > height ? height * ratio : width * ratio;
     },
     onMovePlayed({ game }) {
-      if (this.gameType === "random-ai")
+      if (this.gameType === "random-ai") {
         if (!game.gameOver && game.currentPlayer === "black") {
           const move = this.randomAI.selectMove(game.copy);
           game.makeMove(move);
           this.fen = game.fen;
         }
+      } else if (this.gameType === "normal-ai") {
+        if (!game.gameOver && game.currentPlayer === "black") {
+          const move = this.normalAI.selectMove(game.copy);
+          game.makeMove(move);
+          this.fen = game.fen;
+        }
+      }
     },
     onGameOver({ winner }) {
       this.winner = winner;
@@ -94,7 +105,6 @@ export default {
       while (!this.game.gameOver && this.isPlayTwoAI) {
         const move = this.randomAI.selectMove(this.game.copy);
         this.game.makeMove(move);
-        console.log(this.game.moves);
         await this.sleep(300);
       }
     },

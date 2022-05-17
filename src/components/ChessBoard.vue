@@ -40,7 +40,6 @@ export default {
   },
   watch: {
     fen(newFEN) {
-      console.log(this.game.moves);
       if (newFEN && this.game.fen !== newFEN) this.game.loadGameWithFen(newFEN);
     },
     "game.fen": {
@@ -77,8 +76,6 @@ export default {
       this.$emit("onMovePlayed", { move, game: this.game });
       if (this.game.gameOver)
         this.$emit("onGameOver", { winner: this.game.winner, game: this.game });
-
-      console.log(this.game.moves.filter((x) => x.capture).length);
     },
     getMoveStyle(move) {
       return {
