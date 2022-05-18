@@ -17,7 +17,7 @@
     <chess-board
       :size="chessBoardSize"
       :game="game"
-      v-model:fen="fen"
+      :fen="fen"
       @onMovePlayed="onMovePlayed"
       @onGameOver="onGameOver"
     />
@@ -37,7 +37,6 @@
 
 <script>
 import ChessBoard from "@/components/ChessBoard.vue";
-import { DEFAULT_FEN } from "./constants/chess";
 import { ChessAI, ChessGame } from "./services/chess";
 
 const ratio = 0.8;
@@ -49,13 +48,14 @@ export default {
     const game = new ChessGame();
     return {
       chessBoardSize: width > height ? height * ratio : width * ratio,
-      fen: "r2q3k/7p/1bpp1p2/pp2p3/4P3/PB2BP1b/1PP2P1P/R2Q1RK1 b - - 0 1",
+      fen: "r5qk/7p/1bpp1p2/pp2p3/4P3/PB2BP1b/1PP2P1P/R2Q1RK1/ w - - 1 2",
       game,
       randomAI: new ChessAI({ type: "random" }),
-      normalAI: new ChessAI({ type: "normal", depth: 6 }),
+      normalAI: new ChessAI({ type: "normal", depth: 3 }),
       winner: null,
       gameType: "normal-ai",
       isPlayTwoAI: false,
+      aiMove: null,
     };
   },
   components: {
@@ -64,6 +64,9 @@ export default {
   watch: {
     fen(newValue) {
       console.log(newValue);
+    },
+    aiMove(move) {
+      this.game.makeMove(move);
     },
   },
   mounted() {
@@ -79,21 +82,22 @@ export default {
     },
     onMovePlayed({ move, game }) {
       game.makeMove(move);
-
+      this.fen = game.fen;
+      this.makeAiMove(game);
+    },
+    async makeAiMove(game) {
       if (this.gameType === "random-ai") {
         if (!game.gameOver && game.currentPlayer === "black") {
-          const move = this.randomAI.selectMove(game.copy);
-          game.makeMove(move);
-          this.fen = game.fen;
+          const aiMove = this.randomAI.selectMove(game.copy);
+          game.makeMove(aiMove);
         }
       } else if (this.gameType === "normal-ai") {
         if (!game.gameOver && game.currentPlayer === "black") {
-          const move = this.normalAI.selectMove(game.copy);
-          console.log(move);
-          game.makeMove(move);
-          this.fen = game.fen;
+          const aiMove = this.normalAI.selectMove(game.copy);
+          game.makeMove(aiMove);
         }
       }
+      this.fen = game.fen;
     },
     onGameOver({ winner }) {
       this.winner = winner;

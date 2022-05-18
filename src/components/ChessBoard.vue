@@ -34,18 +34,13 @@ export default {
       default: false,
     },
   },
-  emits: ["update:fen", "onMovePlayed", "onGameOver"],
+  emits: ["onMovePlayed", "onGameOver"],
   components: {
     BoardGround,
   },
   watch: {
-    fen(newFEN) {
-      if (newFEN && this.game.fen !== newFEN) this.game.loadGameWithFen(newFEN);
-    },
     "game.fen": {
       handler(newFen) {
-        this.$emit("update:fen", newFen);
-
         if (this.game.gameOver)
           this.$emit("onGameOver", {
             winner: this.game.winner,
@@ -59,6 +54,7 @@ export default {
     },
   },
   created() {
+    console.log("fen", this.fen);
     this.game.loadGameWithFen(this.fen || DEFAULT_FEN);
   },
   methods: {
@@ -73,6 +69,7 @@ export default {
       if (!this.isActivePiece(piece)) return;
       this.selectedPiece = piece;
       this.validMoves = this.game.getPieceMoves(piece);
+      // console.log(this.validMoves);
     },
     makeMove(move) {
       this.validMoves = [];

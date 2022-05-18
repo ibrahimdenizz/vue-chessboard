@@ -1,4 +1,5 @@
 import {
+  Coefficients,
   K_SIDE_CASTLE,
   lastFileWithColor,
   mailbox,
@@ -19,6 +20,7 @@ export default class Move {
   castling = 0;
   enPassant = false;
   promotion = null;
+  score = 0;
 
   constructor({
     piece,
@@ -27,6 +29,7 @@ export default class Move {
     enPassant = false,
     castling = 0,
     promotion = null,
+    chess,
   }) {
     this.piece = piece;
     this.startIndex = piece.index;
@@ -35,6 +38,7 @@ export default class Move {
     this.enPassant = enPassant;
     this.castling = castling;
     this.promotion = promotion;
+    this.setScore(chess);
   }
 
   get isCheck() {
@@ -60,6 +64,15 @@ export default class Move {
     else return this.targetPosition.y === 7;
   }
 
+  setScore(chess) {
+    if (this.capture) this.score += Coefficients[this.capture.type];
+
+    if (this.promotion) this.score += Coefficients[this.promotion];
+
+    if (chess.inAttack(this.targetIndex, this.piece.color))
+      this.score -= Coefficients[this.piece.type];
+  }
+
   static generatePawnMoves(piece, chess, moves) {
     const validMoves = pieceCodeToMoveOffsets[piece.type][piece.color].map(
       (offset) => offset + piece.index
@@ -69,13 +82,13 @@ export default class Move {
     const moveParams = {
       piece,
       targetIndex: validMoves[0],
+      chess,
     };
 
     if (!this.isIndexValid(validMoves[0])) return [];
 
     if (!chess.getPiece(validMoves[0])) {
       if (parseInt(validMoves[0] / 8) === lastFileWithColor[piece.color]) {
-        console.log("promotion");
         this.generatePromotionMoves(moves, moveParams);
       } else {
         moves.push(new Move(moveParams));
@@ -132,6 +145,7 @@ export default class Move {
     const moveParams = {
       piece,
       capture: null,
+      chess,
     };
 
     for (const offset of offsets) {
@@ -170,6 +184,7 @@ export default class Move {
   static generateCastleMoves(piece, chess, moves) {
     const moveParams = {
       piece,
+      chess,
     };
     const index = piece.index;
 

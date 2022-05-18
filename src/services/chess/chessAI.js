@@ -7,6 +7,7 @@ export default class ChessAI {
   };
 
   positionCount = 0;
+  cutOff = 0;
 
   constructor({ type = "normal", depth = 1, game = null }) {
     this.type = type;
@@ -25,7 +26,7 @@ export default class ChessAI {
         Number.POSITIVE_INFINITY,
         game
       );
-      console.log("searched position: ", this.positionCount);
+      console.log("searched position: ", this.positionCount, this.cutOff);
       return result[1];
     }
   }
@@ -34,13 +35,13 @@ export default class ChessAI {
     return moves[Math.floor(Math.random() * moves.length)];
   }
 
-  search(depth, alpha, beta, _game) {
-    this.positionCount++;
-
-    const game = this.game || _game;
+  search(depth, alpha, beta, game) {
     if (depth === 0) {
-      return [this.evaluate(_game), null];
+      this.positionCount++;
+      return [this.evaluate(game), null];
     }
+
+    game.buildMoves();
 
     if (game.moves.length === 0) {
       if (game.inCheck()) {
@@ -50,17 +51,19 @@ export default class ChessAI {
     }
 
     let bestMove;
+    game.moves.sort((a, b) => b.score - a.score);
     for (const move of game.moves) {
-      game.makeMove(move);
-      let [evaluation, _] = this.search(depth - 1, -alpha, -beta, _game);
+      game.makeUglyMove(move);
+      let [evaluation, _] = this.search(depth - 1, -beta, -alpha, game);
       evaluation = -evaluation;
       game.undoMove();
 
       if (evaluation >= beta) {
+        this.cutOff++;
         return [beta, move];
       }
 
-      if (alpha < evaluation) {
+      if (evaluation > alpha) {
         alpha = evaluation;
         bestMove = move;
       }
@@ -77,7 +80,6 @@ export default class ChessAI {
   evaluate(_game) {
     const game = this.game || _game;
     const board = game.board64Arr;
-
     const colorsEval = this.getColorsEval(board);
 
     const material = colorsEval[WHITE] - colorsEval[BLACK];

@@ -50,7 +50,7 @@ export default class ChessGame {
     const pseudoMoves = this.generatePseudoLegalMoves();
     const currentPlayer = this.currentPlayer;
     for (const pseudoMove of pseudoMoves) {
-      this._makeMove(pseudoMove);
+      this.makeUglyMove(pseudoMove);
       if (!this.inCheck(currentPlayer)) {
         this.moves.push(pseudoMove);
       }
@@ -127,7 +127,7 @@ export default class ChessGame {
     });
   }
 
-  _makeMove(move) {
+  makeUglyMove(move) {
     this.generateHistory(move);
 
     this.board.squares[move.startIndex] = null;
@@ -157,7 +157,7 @@ export default class ChessGame {
   }
 
   makeMove(move) {
-    this._makeMove(move);
+    this.makeUglyMove(move);
     this.buildMoves();
   }
 
@@ -332,7 +332,7 @@ export default class ChessGame {
     let captures = 0;
     const moves = this.generatePseudoLegalMoves();
     for (const move of moves) {
-      this._makeMove(move);
+      this.makeUglyMove(move);
       if (!this.inCheck()) {
         if (depth - 1 > 0) {
           const perft = this.perft(depth - 1);
@@ -390,7 +390,7 @@ export default class ChessGame {
   set castlingStr(value) {
     this.castling[WHITE] = 0;
     this.castling[BLACK] = 0;
-
+    console.log(value);
     if (value !== "-")
       for (const char of value.split("")) {
         switch (char) {
