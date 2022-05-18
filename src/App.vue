@@ -49,10 +49,10 @@ export default {
     const game = new ChessGame();
     return {
       chessBoardSize: width > height ? height * ratio : width * ratio,
-      fen: "",
+      fen: "r2q3k/7p/1bpp1p2/pp2p3/4P3/PB2BP1b/1PP2P1P/R2Q1RK1 b - - 0 1",
       game,
       randomAI: new ChessAI({ type: "random" }),
-      normalAI: new ChessAI({ type: "normal" }),
+      normalAI: new ChessAI({ type: "normal", depth: 6 }),
       winner: null,
       gameType: "normal-ai",
       isPlayTwoAI: false,
@@ -77,7 +77,9 @@ export default {
       const [width, height] = [window.innerWidth, window.innerHeight];
       this.chessBoardSize = width > height ? height * ratio : width * ratio;
     },
-    onMovePlayed({ game }) {
+    onMovePlayed({ move, game }) {
+      game.makeMove(move);
+
       if (this.gameType === "random-ai") {
         if (!game.gameOver && game.currentPlayer === "black") {
           const move = this.randomAI.selectMove(game.copy);
@@ -87,6 +89,7 @@ export default {
       } else if (this.gameType === "normal-ai") {
         if (!game.gameOver && game.currentPlayer === "black") {
           const move = this.normalAI.selectMove(game.copy);
+          console.log(move);
           game.makeMove(move);
           this.fen = game.fen;
         }

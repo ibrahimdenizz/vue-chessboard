@@ -1,5 +1,6 @@
 import {
   K_SIDE_CASTLE,
+  lastFileWithColor,
   mailbox,
   mailbox64,
   mailboxOffsets,
@@ -17,6 +18,7 @@ export default class Move {
   capture = null;
   castling = 0;
   enPassant = false;
+  promotion = null;
 
   constructor({
     piece,
@@ -24,6 +26,7 @@ export default class Move {
     capture = null,
     enPassant = false,
     castling = 0,
+    promotion = null,
   }) {
     this.piece = piece;
     this.startIndex = piece.index;
@@ -31,6 +34,7 @@ export default class Move {
     this.capture = capture;
     this.enPassant = enPassant;
     this.castling = castling;
+    this.promotion = promotion;
   }
 
   get isCheck() {
@@ -70,13 +74,17 @@ export default class Move {
     if (!this.isIndexValid(validMoves[0])) return [];
 
     if (!chess.getPiece(validMoves[0])) {
-      moves.push(new Move(moveParams));
-
-      if (piece.position.y === secondRow && !chess.getPiece(validMoves[1])) {
-        moveParams.targetIndex = validMoves[1];
-        moveParams.enPassant = true;
+      if (parseInt(validMoves[0] / 8) === lastFileWithColor[piece.color]) {
+        console.log("promotion");
+        this.generatePromotionMoves(moves, moveParams);
+      } else {
         moves.push(new Move(moveParams));
-        moveParams.enPassant = false;
+        if (piece.position.y === secondRow && !chess.getPiece(validMoves[1])) {
+          moveParams.targetIndex = validMoves[1];
+          moveParams.enPassant = true;
+          moves.push(new Move(moveParams));
+          moveParams.enPassant = false;
+        }
       }
     }
 
@@ -92,7 +100,11 @@ export default class Move {
         if (capture && capture.color != piece.color) {
           moveParams.targetIndex = capture.index;
           moveParams.capture = capture;
-          moves.push(new Move(moveParams));
+          if (parseInt(validMoves[0] / 8) === lastFileWithColor[piece.color]) {
+            this.generatePromotionMoves(moves, moveParams, capture);
+          } else {
+            moves.push(new Move(moveParams));
+          }
         } else if (index === enPassantCaptureIndex) {
           const enPassantPiece = chess.getPiece(chess.enPassantIndex);
           moveParams.capture = enPassantPiece;
@@ -101,6 +113,18 @@ export default class Move {
         }
       }
     }
+  }
+
+  static generatePromotionMoves(moves, moveParams) {
+    moveParams.promotion = "q";
+    moves.push(new Move(moveParams));
+    moveParams.promotion = "r";
+    moves.push(new Move(moveParams));
+    moveParams.promotion = "b";
+    moves.push(new Move(moveParams));
+    moveParams.promotion = "n";
+    moves.push(new Move(moveParams));
+    moveParams.promotion = null;
   }
 
   static generatePieceMoves(piece, chess, moves) {

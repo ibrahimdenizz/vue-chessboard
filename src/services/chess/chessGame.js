@@ -11,6 +11,7 @@ import {
   mailbox64,
   mailboxOffsets,
   mailboxKingAttackOffsets,
+  pieceTypeToCode,
 } from "@/constants/chess.js";
 import Board from "./board.js";
 import Move from "./move.js";
@@ -167,6 +168,11 @@ export default class ChessGame {
       const move = old.move;
       const capture = move.capture;
       const piece = move.piece;
+      const promotion = move.promotion;
+
+      if (promotion) {
+        piece.changePieceType(pieceTypeToCode[piece.color].p);
+      }
 
       this.castling = old.castling;
       this.enPassantIndex = old.enPassantIndex;
@@ -228,9 +234,9 @@ export default class ChessGame {
     const piece = move.piece;
     piece.index = move.targetIndex;
 
-    if (move.isTargetLastFile) {
+    if (move.promotion) {
       // Update pawn as queen when it is in last square
-      piece.changePieceType(pieceNameToCode[piece.color]["queen"]);
+      piece.changePieceType(pieceTypeToCode[piece.color][move.promotion]);
     }
     this.board.squares[move.targetIndex] = piece;
   }

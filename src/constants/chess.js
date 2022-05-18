@@ -19,6 +19,11 @@ export const secondRowsWithColor = {
   [BLACK]: 1,
 };
 
+export const lastFileWithColor = {
+  [WHITE]: 0,
+  [BLACK]: 7,
+};
+
 export const pieceNameToCode = {
   black: {
     king: "k",
@@ -35,6 +40,25 @@ export const pieceNameToCode = {
     knight: "N",
     pawn: "P",
     rook: "R",
+  },
+};
+
+export const pieceTypeToCode = {
+  black: {
+    k: "k",
+    q: "q",
+    b: "b",
+    n: "n",
+    p: "p",
+    r: "r",
+  },
+  white: {
+    k: "K",
+    q: "Q",
+    b: "B",
+    n: "N",
+    p: "P",
+    r: "R",
   },
 };
 
@@ -130,12 +154,12 @@ export const mailboxKingAttackOffsets = {
 // AI constants
 
 export const Coefficients = {
-  k: 200,
-  q: 9,
-  r: 5,
-  b: 3,
-  n: 3,
-  p: 1,
+  k: 20000,
+  q: 900,
+  r: 500,
+  b: 300,
+  n: 300,
+  p: 100,
   P_ISSUES: 0.5, // Doubled, blocked and isolated pawns. Maybe later,
   LEGAL_MOVES: 0.1, // Number of legal moves. Maybe later
   [WHITE]: 1,

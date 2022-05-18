@@ -6,6 +6,8 @@ export default class ChessAI {
     move: null,
   };
 
+  positionCount = 0;
+
   constructor({ type = "normal", depth = 1, game = null }) {
     this.type = type;
     this.depth = depth;
@@ -16,14 +18,15 @@ export default class ChessAI {
     const game = this.game || _game;
     if (this.type === "random") return this.selectRandomMove(game.moves);
     if (this.type === "normal") {
-      this.search(
+      this.positionCount = 0;
+      const result = this.search(
         this.depth,
         Number.NEGATIVE_INFINITY,
         Number.POSITIVE_INFINITY,
         game
       );
-
-      return this.bestMove.move;
+      console.log("searched position: ", this.positionCount);
+      return result[1];
     }
   }
 
@@ -32,36 +35,38 @@ export default class ChessAI {
   }
 
   search(depth, alpha, beta, _game) {
+    this.positionCount++;
+
     const game = this.game || _game;
     if (depth === 0) {
-      return this.evaluate(_game);
+      return [this.evaluate(_game), null];
     }
-
-    console.log(this.evaluate(_game));
 
     if (game.moves.length === 0) {
       if (game.inCheck()) {
-        return Number.NEGATIVE_INFINITY;
+        return [Number.NEGATIVE_INFINITY, null];
       }
-      return 0;
+      return [0, null];
     }
 
+    let bestMove;
     for (const move of game.moves) {
       game.makeMove(move);
-      let evaluation = -this.search(depth - 1, alpha, beta, _game);
+      let [evaluation, _] = this.search(depth - 1, -alpha, -beta, _game);
+      evaluation = -evaluation;
       game.undoMove();
 
       if (evaluation >= beta) {
-        return beta;
+        return [beta, move];
       }
 
       if (alpha < evaluation) {
         alpha = evaluation;
-        this.saveBestMove(move, evaluation);
+        bestMove = move;
       }
     }
 
-    return alpha;
+    return [alpha, bestMove];
   }
 
   saveBestMove(move, evaluation) {

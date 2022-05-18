@@ -44,7 +44,13 @@ export default {
     },
     "game.fen": {
       handler(newFen) {
-        this.render = !this.render;
+        this.$emit("update:fen", newFen);
+
+        if (this.game.gameOver)
+          this.$emit("onGameOver", {
+            winner: this.game.winner,
+            game: this.game,
+          });
       },
     },
     game() {
@@ -69,15 +75,13 @@ export default {
       this.validMoves = this.game.getPieceMoves(piece);
     },
     makeMove(move) {
-      this.game.makeMove(move);
       this.validMoves = [];
       this.selectedPiece = null;
-      this.$emit("update:fen", this.game.fen);
       this.$emit("onMovePlayed", { move, game: this.game });
-      if (this.game.gameOver)
-        this.$emit("onGameOver", { winner: this.game.winner, game: this.game });
     },
     getMoveStyle(move) {
+      if (move.promotion && move.promotion !== "q") return { display: "none" };
+
       return {
         transform: `translate(${move.targetPosition.x * 100}%,${
           move.targetPosition.y * 100

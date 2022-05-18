@@ -22,7 +22,13 @@ class Piece {
 
   changePieceType(code) {
     this.code = code;
-    this.setIsSlide(code);
+    this.code = code;
+    this.type = this.code.toLowerCase();
+    this.pieceName = pieceCodeToName[this.type];
+    this.isSlide =
+      this.type === pieceCode.bishop ||
+      this.type === pieceCode.queen ||
+      this.type === pieceCode.rook;
   }
 
   get position() {
