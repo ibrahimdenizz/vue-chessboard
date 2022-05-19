@@ -22,6 +22,7 @@
       @onGameOver="onGameOver"
     />
     <div>
+      <button class="btn" @click="undoMove()">Undo</button>
       <button class="btn" @click="changeGameType('two-player')">
         Two player
       </button>
@@ -48,10 +49,10 @@ export default {
     const game = new ChessGame();
     return {
       chessBoardSize: width > height ? height * ratio : width * ratio,
-      fen: "r5qk/7p/1bpp1p2/pp2p3/4P3/PB2BP1b/1PP2P1P/R2Q1RK1/ w - - 1 2",
+      fen: "" /* "r5qk/7p/1bpp1p2/pp2p3/4P3/PB2BP1b/1PP2P1P/R2Q1RK1/ w - - 1 2" */,
       game,
       randomAI: new ChessAI({ type: "random" }),
-      normalAI: new ChessAI({ type: "normal", depth: 3 }),
+      normalAI: new ChessAI({ type: "normal", depth: 2 }),
       winner: null,
       gameType: "normal-ai",
       isPlayTwoAI: false,
@@ -64,9 +65,6 @@ export default {
   watch: {
     fen(newValue) {
       console.log(newValue);
-    },
-    aiMove(move) {
-      this.game.makeMove(move);
     },
   },
   mounted() {
@@ -83,7 +81,7 @@ export default {
     onMovePlayed({ move, game }) {
       game.makeMove(move);
       this.fen = game.fen;
-      this.makeAiMove(game);
+      if (this.gameType !== "two-player") this.makeAiMove(game);
     },
     async makeAiMove(game) {
       if (this.gameType === "random-ai") {
@@ -106,6 +104,10 @@ export default {
       this.isPlayTwoAI = false;
       this.gameType = type;
       this.game = new ChessGame();
+    },
+    undoMove() {
+      this.game.undoMove();
+      this.game.buildMoves();
     },
     async playTwoAI() {
       this.isPlayTwoAI = true;

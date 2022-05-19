@@ -1,13 +1,9 @@
 import { BLACK, WHITE, Coefficients } from "@/constants/chess";
 
 export default class ChessAI {
-  bestMove = {
-    evaluation: 0,
-    move: null,
-  };
-
   positionCount = 0;
   cutOff = 0;
+  quiesceCount = 0;
 
   constructor({ type = "normal", depth = 1, game = null }) {
     this.type = type;
@@ -20,13 +16,17 @@ export default class ChessAI {
     if (this.type === "random") return this.selectRandomMove(game.moves);
     if (this.type === "normal") {
       this.positionCount = 0;
+      this.quiesceCount = 0;
+      this.cutOff = 0;
       const result = this.search(
         this.depth,
         Number.NEGATIVE_INFINITY,
         Number.POSITIVE_INFINITY,
         game
       );
-      console.log("searched position: ", this.positionCount, this.cutOff);
+      console.log("searched position: ", this.positionCount);
+      console.log("cut off count: ", this.cutOff);
+      console.log("quiesce count: ", this.quiesceCount);
       return result[1];
     }
   }
@@ -38,12 +38,12 @@ export default class ChessAI {
   search(depth, alpha, beta, game) {
     if (depth === 0) {
       this.positionCount++;
-      return [this.evaluate(game), null];
+      return [this.quiesce(alpha, beta, game), null];
     }
 
-    game.buildMoves();
+    const moves = game.generateMoves();
 
-    if (game.moves.length === 0) {
+    if (moves.length === 0) {
       if (game.inCheck()) {
         return [Number.NEGATIVE_INFINITY, null];
       }
@@ -51,8 +51,8 @@ export default class ChessAI {
     }
 
     let bestMove;
-    game.moves.sort((a, b) => b.score - a.score);
-    for (const move of game.moves) {
+    moves.sort((a, b) => b.score - a.score);
+    for (const move of moves) {
       game.makeUglyMove(move);
       let [evaluation, _] = this.search(depth - 1, -beta, -alpha, game);
       evaluation = -evaluation;
@@ -72,9 +72,26 @@ export default class ChessAI {
     return [alpha, bestMove];
   }
 
-  saveBestMove(move, evaluation) {
-    this.bestMove.move = move;
-    this.bestMove.evaluation = evaluation;
+  quiesce(alpha, beta, game) {
+    this.quiesceCount++;
+    const stand_pat = this.evaluate(game);
+
+    if (stand_pat >= beta) return beta;
+
+    if (alpha < stand_pat) alpha = stand_pat;
+
+    const captureMoves = game.generateMoves({ onlyCapture: true });
+    captureMoves.sort((a, b) => b.score - a.score);
+
+    for (const move of captureMoves) {
+      game.makeUglyMove(move);
+      const score = -this.quiesce(-beta, -alpha, game);
+      game.undoMove();
+
+      if (score >= beta) return beta;
+      if (score > alpha) alpha = score;
+    }
+    return alpha;
   }
 
   evaluate(_game) {

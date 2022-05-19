@@ -46,21 +46,26 @@ export default class ChessGame {
     return moves;
   }
 
-  getLegalMoves() {
-    const pseudoMoves = this.generatePseudoLegalMoves();
+  generateMoves(options) {
+    let pseudoMoves = this.generatePseudoLegalMoves();
+    if (options?.onlyCapture)
+      pseudoMoves = pseudoMoves.filter((x) => x.capture);
+
     const currentPlayer = this.currentPlayer;
+    const legalMoves = [];
     for (const pseudoMove of pseudoMoves) {
       this.makeUglyMove(pseudoMove);
       if (!this.inCheck(currentPlayer)) {
-        this.moves.push(pseudoMove);
+        legalMoves.push(pseudoMove);
       }
       this.undoMove();
     }
+
+    return legalMoves;
   }
 
   buildMoves() {
-    this.moves = [];
-    this.getLegalMoves();
+    this.moves = this.generateMoves();
   }
 
   checkDoubleCheck() {
@@ -140,14 +145,13 @@ export default class ChessGame {
       this.board.squares[move.capture.index] = null;
     }
 
-    const piece = move.piece;
-    piece.index = move.targetIndex;
-
     if (move.piece.type === pieceCode.pawn) {
       this.makePawnMove(move);
     } else if (move.castling) {
       this.makeCastlingMove(move);
     } else {
+      const piece = move.piece;
+      piece.index = move.targetIndex;
       this.board.squares[move.targetIndex] = piece;
     }
 
@@ -292,7 +296,7 @@ export default class ChessGame {
     for (const offset of offsets) {
       let index = _index;
       index = mailbox[mailbox64[index] + offset];
-      while (index != -1) {
+      while (index != -1 && index != undefined) {
         const sq = this.getPiece(index);
         if (sq != null) {
           let captureOffsets = mailboxOffsets[sq.type];
@@ -390,7 +394,6 @@ export default class ChessGame {
   set castlingStr(value) {
     this.castling[WHITE] = 0;
     this.castling[BLACK] = 0;
-    console.log(value);
     if (value !== "-")
       for (const char of value.split("")) {
         switch (char) {
