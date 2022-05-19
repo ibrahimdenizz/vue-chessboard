@@ -21,7 +21,6 @@
   </p>
   <div class="home">
     <chess-board
-      :size="chessBoardSize"
       :game="game"
       v-model:fen="fen"
       @onMovePlayed="onMovePlayed"

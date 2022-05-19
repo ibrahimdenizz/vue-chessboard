@@ -1,10 +1,13 @@
 {
-  "name": "vue-chessboard",
+  "name": "@ibrahimdeniz/vue-chessboard",
   "description": "Chessboard component for vue based on fen notation",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": {
     "name": "İbrahim Deniz",
     "email": "dnzibrahim1@gmail.com"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "keywords": [
     "chessboard",

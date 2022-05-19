@@ -1,13 +1,21 @@
 # vue-chessboard
 
+<div style="text-align:center;">
+<img src="img/chessboard-preview.png" width="50%"  />
+</div>
+
 ## What is vue-chessboard
 
 vue-chessboard is Vue component. It provides chessboard view and functionality to your projects. This is my graduation project so there may be bug or performance issues.
 
 ## Installation
 
-```
-# coming soon
+```bash
+# npm
+npm install @ibrahimdeniz/vue-chessboard
+
+#yarn
+yarn add @ibrahimdeniz/vue-chessboard
 ```
 
 # Bare Minimum
@@ -18,8 +26,8 @@ vue-chessboard is Vue component. It provides chessboard view and functionality t
 </template>
 
 <script>
-import { ChessBoard } from "vue-chessboard";
-import "vue-chessboard/dist/style.css";
+import { ChessBoard } from "@ibrahimdeniz/vue-chessboard";
+import "@ibrahimdeniz/vue-chessboard/dist/style.css";
 
 export default {
   name: "App",
@@ -56,8 +64,8 @@ export default {
 </template>
 
 <script>
-import { ChessBoard } from "vue-chessboard";
-import "vue-chessboard/dist/style.css";
+import { ChessBoard } from "@ibrahimdeniz/vue-chessboard";
+import "@ibrahimdeniz/vue-chessboard/dist/style.css";
 
 const ratio = 0.8;
 
