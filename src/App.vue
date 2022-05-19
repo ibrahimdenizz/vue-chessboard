@@ -1,3 +1,9 @@
+<!-- 
+  This file is just for testing library. 
+  Actual library files exported in index.js.
+  You can find actual files şf you follow index.js imports.
+ -->
+
 <template>
   <p
     :style="{
@@ -17,7 +23,7 @@
     <chess-board
       :size="chessBoardSize"
       :game="game"
-      :fen="fen"
+      v-model:fen="fen"
       @onMovePlayed="onMovePlayed"
       @onGameOver="onGameOver"
     />
@@ -52,7 +58,7 @@ export default {
       fen: "" /* "r5qk/7p/1bpp1p2/pp2p3/4P3/PB2BP1b/1PP2P1P/R2Q1RK1/ w - - 1 2" */,
       game,
       randomAI: new ChessAI({ type: "random" }),
-      normalAI: new ChessAI({ type: "normal", depth: 2 }),
+      normalAI: new ChessAI({ type: "normal", depth: 3 }),
       winner: null,
       gameType: "normal-ai",
       isPlayTwoAI: false,
@@ -78,9 +84,8 @@ export default {
       const [width, height] = [window.innerWidth, window.innerHeight];
       this.chessBoardSize = width > height ? height * ratio : width * ratio;
     },
-    onMovePlayed({ move, game }) {
+    async onMovePlayed({ move, game }) {
       game.makeMove(move);
-      this.fen = game.fen;
       if (this.gameType !== "two-player") this.makeAiMove(game);
     },
     async makeAiMove(game) {
@@ -95,7 +100,6 @@ export default {
           game.makeMove(aiMove);
         }
       }
-      this.fen = game.fen;
     },
     onGameOver({ winner }) {
       this.winner = winner;

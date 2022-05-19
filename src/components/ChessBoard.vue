@@ -34,13 +34,14 @@ export default {
       default: false,
     },
   },
-  emits: ["onMovePlayed", "onGameOver"],
+  emits: ["onMovePlayed", "onGameOver", "update:fen"],
   components: {
     BoardGround,
   },
   watch: {
     "game.fen": {
       handler(newFen) {
+        this.$emit("update:fen", newFen);
         if (this.game.gameOver)
           this.$emit("onGameOver", {
             winner: this.game.winner,
@@ -69,7 +70,6 @@ export default {
       if (!this.isActivePiece(piece)) return;
       this.selectedPiece = piece;
       this.validMoves = this.game.getPieceMoves(piece);
-      // console.log(this.validMoves);
     },
     makeMove(move) {
       this.validMoves = [];
@@ -94,7 +94,6 @@ export default {
     <board-ground
       :game="game"
       :size="size"
-      :fen="fen"
       @selectPiece="selectPiece"
       :isActivePiece="isActivePiece"
     />

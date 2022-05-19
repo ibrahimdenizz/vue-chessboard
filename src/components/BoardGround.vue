@@ -6,7 +6,6 @@ export default {
   name: "Board",
   props: {
     size: Number,
-    fen: String,
     game: ChessGame,
     isActivePiece: Function,
   },
