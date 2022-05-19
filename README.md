@@ -1,6 +1,6 @@
 # vue-chessboard
 
-<div style="text-align:center;">
+<div align="center" markdown="1">
 <img src="img/chessboard-preview.png" width="50%"  />
 </div>
 
