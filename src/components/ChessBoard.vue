@@ -89,22 +89,24 @@ export default {
 </script>
 
 <template>
-  <div class="board" :style="{ width: `${size}px`, height: `${size}px` }">
-    <board-ground
-      :game="game"
-      :size="size"
-      @selectPiece="selectPiece"
-      :isActivePiece="isActivePiece"
-    />
+  <div>
+    <div class="board" :style="{ width: `${size}px`, height: `${size}px` }">
+      <board-ground
+        :game="game"
+        :size="size"
+        @selectPiece="selectPiece"
+        :isActivePiece="isActivePiece"
+      />
 
-    <div class="board-positions valid-moves">
-      <div
-        v-for="(move, index) in validMoves"
-        :key="index"
-        class="valid-move"
-        :style="getMoveStyle(move)"
-        @click="makeMove(move)"
-      ></div>
+      <div class="board-positions valid-moves">
+        <div
+          v-for="(move, index) in validMoves"
+          :key="index"
+          class="valid-move"
+          :style="getMoveStyle(move)"
+          @click="makeMove(move)"
+        ></div>
+      </div>
     </div>
   </div>
 </template>
