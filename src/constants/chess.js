@@ -260,14 +260,21 @@ const KING_END_SQ = [
   -50,-30,-30,-30,-30,-30,-30,-50
 ]
 
-export const SQUARE_TABLES = {
-  p: PAWN_SQ,
-  n: KNIGHTS_SQ,
-  b: BISHOP_SQ,
-  r: ROOK_SQ,
-  q: QUEEN_SQ,
-  k: {
-    middle: KING_MD_SQ,
-    end: KING_END_SQ,
+export const SQUARE_WEIGHT_TABLES = {
+  [WHITE]: {
+    p: PAWN_SQ,
+    n: KNIGHTS_SQ,
+    b: BISHOP_SQ,
+    r: ROOK_SQ,
+    q: QUEEN_SQ,
+    k: KING_MD_SQ,
+  },
+  [BLACK]: {
+    p: PAWN_SQ.slice().reverse(),
+    n: KNIGHTS_SQ.slice().reverse(),
+    b: BISHOP_SQ.slice().reverse(),
+    r: ROOK_SQ.slice().reverse(),
+    q: QUEEN_SQ.slice().reverse(),
+    k: KING_MD_SQ.slice().reverse(),
   },
 };

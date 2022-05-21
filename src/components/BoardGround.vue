@@ -4,12 +4,24 @@ import ChessPiece from "./ChessPiece.vue";
 
 export default {
   name: "Board",
+  data() {
+    return {
+      render: false,
+    };
+  },
   props: {
     size: Number,
     game: ChessGame,
     isActivePiece: Function,
   },
   emits: ["selectPiece", "isActivePiece"],
+  watch: {
+    "game.fen": {
+      handler() {
+        this.render = !this.render;
+      },
+    },
+  },
   methods: {
     getPiece(x, y) {
       return this.game.getPiece(x, y);

@@ -6,6 +6,7 @@ import {
   TT_UPPER,
   TT_EXACT,
   TT_LOWER,
+  SQUARE_WEIGHT_TABLES,
 } from "@/constants/chess";
 import ChessGame from "./chessGame";
 import { TranspositionTable } from "./transpositionTable";
@@ -96,6 +97,7 @@ export default class ChessAI {
     let tt_type = TT_UPPER;
     let bestMove;
     moves.sort((a, b) => b.score - a.score);
+
     for (const move of moves) {
       game.makeUglyMove(move);
       let evaluation = this.search(depth - 1, -beta, -alpha, game, root + 1);
@@ -213,7 +215,9 @@ export default class ChessAI {
   getColorEval(color, board) {
     let colorEval = 0;
     board.mapColorList(color, (piece) => {
-      colorEval += Coefficients[piece.type];
+      colorEval +=
+        Coefficients[piece.type] +
+        SQUARE_WEIGHT_TABLES[piece.color][piece.type][piece.index];
     });
 
     return colorEval;

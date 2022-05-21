@@ -63,42 +63,14 @@ export default class ChessGame {
       this.undoUglyMove();
     }
 
+    if (this.inDoubleCheck())
+      return legalMoves.filter((move) => move.piece.type === pieceCode.king);
+
     return legalMoves;
   }
 
   buildMoves() {
     this.moves = this.generateMoves();
-  }
-
-  checkDoubleCheck() {
-    const offsets = mailboxOffsets.k;
-    let captureCount = 0;
-    for (const offset of offsets) {
-      let index = this.board.kings[this.currentPlayer].index;
-      index = mailbox[mailbox64[index] + offset];
-      while (index != -1) {
-        const sq = this.getPiece(index);
-        if (sq != null) {
-          const captureOffsets = mailboxOffsets[sq.type];
-          if (
-            sq.isSlide &&
-            sq.color != this.currentPlayer &&
-            captureOffsets.includes(offset)
-          ) {
-            captureCount++;
-          }
-          break;
-        }
-
-        index = mailbox[mailbox64[index] + offset];
-      }
-      if (captureCount == 2) {
-        this.moves = this.moves.filter(
-          (move) => move.piece.type === pieceCode.king
-        );
-        break;
-      }
-    }
   }
 
   getPiece(x, y = null) {
@@ -266,62 +238,76 @@ export default class ChessGame {
     this.buildMoves();
   }
 
-  inKnightAttack(_index, color) {
+  inKnightAttack(_index, color, returnCount = false) {
+    let count = 0;
+
     for (const knightOffset of mailboxKingAttackOffsets.n) {
       let index = _index;
       index = mailbox[mailbox64[index] + knightOffset];
       const sq = this.getPiece(index);
       if (sq && sq.type === pieceCode.knight && sq.color !== color) {
-        return true;
+        if (!returnCount) return true;
+        count++;
       }
     }
-    return false;
+    return returnCount ? count : false;
   }
 
-  inPawnAttack(_index, color) {
+  inPawnAttack(_index, color, returnCount = false) {
     const opponentColor = this.getOpponentColor(color);
+    let count = 0;
 
     for (const pawnOffset of mailboxKingAttackOffsets.p[opponentColor]) {
       let index = _index;
       index = mailbox[mailbox64[index] + pawnOffset];
       const sq = this.getPiece(index);
       if (sq && sq.type === pieceCode.pawn && sq.color !== color) {
-        return true;
+        if (!returnCount) return true;
+        count++;
       }
     }
 
-    return false;
+    return returnCount ? count : false;
   }
 
-  inKingAttack(_index, color) {
+  inKingAttack(_index, color, returnCount = false) {
+    let count = 0;
+
     for (const kingOffset of mailboxKingAttackOffsets.k) {
       let index = _index;
       index = mailbox[mailbox64[index] + kingOffset];
       const sq = this.getPiece(index);
       if (sq && sq.type === pieceCode.king && sq.color !== color) {
-        return true;
+        if (!returnCount) return true;
+        count++;
       }
     }
 
-    return false;
+    return returnCount ? count : false;
   }
 
-  inSlidingAttack(_index, color) {
+  inSlidingAttack(_index, color, returnCount = false) {
     const offsets = mailboxOffsets.k;
+    let count = 0;
 
     for (const offset of offsets) {
       let index = _index;
       index = mailbox[mailbox64[index] + offset];
+
       while (index != -1 && index != undefined) {
         const sq = this.getPiece(index);
+
         if (sq != null) {
           let captureOffsets = mailboxOffsets[sq.type];
+
           if (
             sq.isSlide &&
             sq.color !== color &&
             captureOffsets.includes(offset)
-          )
-            return true;
+          ) {
+            if (!returnCount) return true;
+            count++;
+          }
 
           break;
         }
@@ -330,10 +316,19 @@ export default class ChessGame {
       }
     }
 
-    return false;
+    return returnCount ? count : false;
   }
 
-  inAttack(index, color) {
+  inAttack(index, color, returnCount = false) {
+    if (returnCount) {
+      return (
+        this.inKnightAttack(index, color, returnCount) +
+        this.inPawnAttack(index, color, returnCount) +
+        this.inSlidingAttack(index, color, returnCount) +
+        this.inKingAttack(index, color, returnCount)
+      );
+    }
+
     return (
       this.inKnightAttack(index, color) ||
       this.inPawnAttack(index, color) ||
@@ -344,6 +339,10 @@ export default class ChessGame {
 
   inCheck(color = this.currentPlayer) {
     return this.inAttack(this.board.kings[color].index, color);
+  }
+
+  inDoubleCheck(color = this.currentPlayer) {
+    return this.inAttack(this.board.kings[color].index, color, true) > 1;
   }
 
   perft(depth) {

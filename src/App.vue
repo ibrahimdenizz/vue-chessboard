@@ -17,7 +17,14 @@
       'text-align': 'center',
     }"
   >
-    Zobrist: {{ game.zobrist.key }}
+    FEN: {{ game.fen }}
+  </p>
+  <p
+    :style="{
+      'text-align': 'center',
+    }"
+  >
+    Zobrist Hash: {{ game.zobrist.hash }}
   </p>
   <div class="home">
     <chess-board
@@ -54,7 +61,7 @@ export default {
     const game = new ChessGame();
     return {
       chessBoardSize: width > height ? height * ratio : width * ratio,
-      fen: "8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 0 1",
+      fen: "",
       game,
       randomAI: new ChessAI({ type: "random" }),
       normalAI: new ChessAI({ type: "normal", depth: 3 }),
@@ -87,19 +94,21 @@ export default {
       game.makeMove(move);
       if (this.gameType !== "two-player") this.makeAiMove(game);
     },
-    async makeAiMove(game) {
-      console.log(game.moves);
-      if (this.gameType === "random-ai") {
-        if (!game.gameOver && game.currentPlayer === "black") {
-          const aiMove = this.randomAI.selectMove(game.copy);
-          game.makeMove(aiMove);
+    makeAiMove(game) {
+      return setTimeout(() => {
+        if (this.gameType === "random-ai") {
+          if (!game.gameOver && game.currentPlayer === "black") {
+            const aiMove = this.randomAI.selectMove(game.copy);
+            game.makeMove(aiMove);
+          }
+        } else if (this.gameType === "normal-ai") {
+          if (!game.gameOver && game.currentPlayer === "black") {
+            const aiMove = this.normalAI.selectMove(game.copy);
+            console.log(aiMove);
+            game.makeMove(aiMove);
+          }
         }
-      } else if (this.gameType === "normal-ai") {
-        if (!game.gameOver && game.currentPlayer === "black") {
-          const aiMove = this.normalAI.selectMove(game.copy);
-          game.makeMove(aiMove);
-        }
-      }
+      }, 0);
     },
     onGameOver({ winner }) {
       this.winner = winner;
