@@ -1,4 +1,5 @@
 import { BLACK, DEFAULT_FEN, pieceCode, WHITE } from "@/constants/chess";
+import PieceList from "./pieceList";
 import Piece from "./pieces";
 
 export default class Board {
@@ -8,13 +9,47 @@ export default class Board {
     [WHITE]: null,
     [BLACK]: null,
   };
+  pieceList = {
+    black: new PieceList(),
+    white: new PieceList(),
+  };
 
   constructor(fen) {
     this.fenPosition = fen || DEFAULT_FEN.split(" ")[0];
   }
 
-  set fenPosition(fenPosition) {
+  getPiece(x, y = null) {
+    if (x === -1) return null;
+    if (y) return this.squares[(y - 1) * 8 + (x - 1)];
+    else return this.squares[x];
+  }
+
+  addPiece(piece) {
+    this.pieceList[piece.color].addPiece(piece);
+    this.squares[piece.index] = piece;
+  }
+
+  deletePiece(piece) {
+    if (piece) {
+      this.pieceList[piece.color].deletePiece(piece);
+      this.squares[piece.index] = null;
+    }
+  }
+
+  mapColorList(color, cb) {
+    this.pieceList[color].mapList(cb);
+  }
+
+  clear() {
     this.squares = Array(64).fill(null);
+    this.pieceList = {
+      black: new PieceList(),
+      white: new PieceList(),
+    };
+  }
+
+  set fenPosition(fenPosition) {
+    this.clear();
     fenPosition.split("/").forEach((rowStr, y) => {
       let x = 0;
       rowStr.split("").forEach((char) => {
@@ -27,7 +62,8 @@ export default class Board {
             color: char !== char.toLowerCase() ? WHITE : BLACK,
           };
           const piece = new Piece(pieceParam);
-          this.squares[y * 8 + x] = piece;
+          this.addPiece(piece);
+
           if (piece.type === pieceCode.king) {
             this.kings[piece.color] = piece;
           }
@@ -36,12 +72,6 @@ export default class Board {
       });
     });
   }
-
-  getPiece(x, y = null) {
-    if (y) return this.squares[(y - 1) * 8 + (x - 1)];
-    else return this.squares[x];
-  }
-
   get fenPosition() {
     let fen = "";
     let nullCount = 0;
@@ -66,7 +96,11 @@ export default class Board {
     return fen;
   }
 
+  getColorNotPawnNum(color) {
+    return this.pieceList[color].numNotPawn;
+  }
+
   get pieceCount() {
-    return this.squares.filter((x) => x).length;
+    return this.pieceList.white.numPieces + this.pieceList.black.numPieces;
   }
 }

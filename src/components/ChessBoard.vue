@@ -55,7 +55,6 @@ export default {
     },
   },
   created() {
-    console.log("fen", this.fen);
     this.game.loadGameWithFen(this.fen || DEFAULT_FEN);
   },
   methods: {

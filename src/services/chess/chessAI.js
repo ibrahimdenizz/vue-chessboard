@@ -1,75 +1,143 @@
-import { BLACK, WHITE, Coefficients } from "@/constants/chess";
+import {
+  BLACK,
+  WHITE,
+  Coefficients,
+  endGameValue,
+  TT_UPPER,
+  TT_EXACT,
+  TT_LOWER,
+} from "@/constants/chess";
+import ChessGame from "./chessGame";
+import { TranspositionTable } from "./transpositionTable";
 
 export default class ChessAI {
   positionCount = 0;
   cutOff = 0;
   quiesceCount = 0;
+  transpositionNum = 0;
 
   constructor({ type = "normal", depth = 1, game = null }) {
     this.type = type;
     this.depth = depth;
     this.game = game;
+    this.transpositionTable = new TranspositionTable(game);
+    this.bestMove = null;
   }
 
   selectMove(_game) {
     const game = this.game || _game;
     if (this.type === "random") return this.selectRandomMove(game.moves);
     if (this.type === "normal") {
-      this.positionCount = 0;
-      this.quiesceCount = 0;
-      this.cutOff = 0;
-      const result = this.search(
+      this.resetDebug();
+      this.bestMove = null;
+      this.search(
         this.depth,
         Number.NEGATIVE_INFINITY,
         Number.POSITIVE_INFINITY,
         game
       );
-      console.log("searched position: ", this.positionCount);
-      console.log("cut off count: ", this.cutOff);
-      console.log("quiesce count: ", this.quiesceCount);
-      return result[1];
+      this.logDebug();
+      return this.bestMove;
     }
+  }
+
+  resetDebug() {
+    this.positionCount = 0;
+    this.quiesceCount = 0;
+    this.cutOff = 0;
+    this.transpositionNum = 0;
+  }
+
+  logDebug() {
+    console.log("searched position: ", this.positionCount);
+    console.log("cut off count: ", this.cutOff);
+    console.log("quiesce count: ", this.quiesceCount);
+    console.log(
+      "transposition count: ",
+      this.transpositionNum,
+      Object.keys(this.transpositionTable.hashes).length
+    );
   }
 
   selectRandomMove(moves) {
     return moves[Math.floor(Math.random() * moves.length)];
   }
 
-  search(depth, alpha, beta, game) {
+  search(depth, alpha, beta, game, root = 0) {
+    const storedHash = this.transpositionTable.getStoredHash(
+      {
+        depth: depth,
+        alpha: alpha,
+        beta: beta,
+      },
+      game
+    );
+
+    if (storedHash !== null) {
+      this.transpositionNum++;
+      if (root === 0) this.bestMove = storedHash.move;
+      return storedHash.score;
+    }
+
     if (depth === 0) {
       this.positionCount++;
-      return [this.quiesce(alpha, beta, game), null];
+      return this.quiesce(alpha, beta, game);
     }
 
     const moves = game.generateMoves();
 
     if (moves.length === 0) {
       if (game.inCheck()) {
-        return [Number.NEGATIVE_INFINITY, null];
+        return Number.NEGATIVE_INFINITY;
       }
-      return [0, null];
+      return 0;
     }
 
+    let tt_type = TT_UPPER;
     let bestMove;
     moves.sort((a, b) => b.score - a.score);
     for (const move of moves) {
       game.makeUglyMove(move);
-      let [evaluation, _] = this.search(depth - 1, -beta, -alpha, game);
+      let evaluation = this.search(depth - 1, -beta, -alpha, game, root + 1);
       evaluation = -evaluation;
-      game.undoMove();
+      game.undoUglyMove();
 
       if (evaluation >= beta) {
         this.cutOff++;
-        return [beta, move];
+        this.transpositionTable.addEvaluation(
+          {
+            depth,
+            move,
+            score: beta,
+            type: TT_LOWER,
+          },
+          game
+        );
+        return beta;
       }
 
       if (evaluation > alpha) {
+        tt_type = TT_EXACT;
         alpha = evaluation;
         bestMove = move;
+
+        if (root === 0) {
+          this.bestMove = bestMove;
+        }
       }
     }
 
-    return [alpha, bestMove];
+    this.transpositionTable.addEvaluation(
+      {
+        depth,
+        move: bestMove,
+        score: alpha,
+        type: tt_type,
+      },
+      game
+    );
+
+    return alpha;
   }
 
   quiesce(alpha, beta, game) {
@@ -86,7 +154,7 @@ export default class ChessAI {
     for (const move of captureMoves) {
       game.makeUglyMove(move);
       const score = -this.quiesce(-beta, -alpha, game);
-      game.undoMove();
+      game.undoUglyMove();
 
       if (score >= beta) return beta;
       if (score > alpha) alpha = score;
@@ -94,28 +162,60 @@ export default class ChessAI {
     return alpha;
   }
 
-  evaluate(_game) {
-    const game = this.game || _game;
-    const board = game.board64Arr;
-    const colorsEval = this.getColorsEval(board);
-
-    const material = colorsEval[WHITE] - colorsEval[BLACK];
-
-    return material * Coefficients[game.currentPlayer];
+  endGameWeight(notPawnCount) {
+    return 1 - Math.min(1, notPawnCount * (1 / endGameValue));
   }
 
-  getColorsEval(board) {
-    const colorsEval = {
-      [WHITE]: 0,
-      [BLACK]: 0,
-    };
+  endGameEval(friendlyKing, opponentKing, friendlyNotPawnCount) {
+    let evaluation = 0;
 
-    for (const piece of board) {
-      if (piece) {
-        colorsEval[piece.color] += Coefficients[piece.type];
-      }
-    }
+    const { x: opponentKingX, y: opponentKingY } = opponentKing.position;
 
-    return colorsEval;
+    const opponentDestDiffX = Math.max(3 - opponentKingX, opponentKingX - 4);
+    const opponentDestDiffY = Math.max(3 - opponentKingY, opponentKingY - 4);
+    const opponentDestDiff = opponentDestDiffX + opponentDestDiffY;
+    evaluation += opponentDestDiff;
+
+    const { x: friendKingX, y: friendKingY } = friendlyKing.position;
+    const betweenDestX = Math.abs(friendKingX - opponentKingX);
+    const betweenDestY = Math.abs(friendKingY - opponentKingY);
+    const betweenDest = betweenDestX + betweenDestY;
+    evaluation += 14 - betweenDest;
+
+    const endGameWeight =
+      1 - Math.min(1, friendlyNotPawnCount * (1 / endGameValue));
+
+    return evaluation * 10 * endGameWeight;
+  }
+
+  evaluate(_game) {
+    const game = this.game || _game;
+    const board = game.board;
+    const kings = board.kings;
+
+    let whiteEval = this.getColorEval(WHITE, board);
+    let blackEval = this.getColorEval(BLACK, board);
+
+    whiteEval += this.endGameEval(
+      kings.white,
+      kings.black,
+      board.getColorNotPawnNum(WHITE)
+    );
+    blackEval += this.endGameEval(
+      kings.black,
+      kings.white,
+      board.getColorNotPawnNum(BLACK)
+    );
+
+    return (whiteEval - blackEval) * Coefficients[game.currentPlayer];
+  }
+
+  getColorEval(color, board) {
+    let colorEval = 0;
+    board.mapColorList(color, (piece) => {
+      colorEval += Coefficients[piece.type];
+    });
+
+    return colorEval;
   }
 }

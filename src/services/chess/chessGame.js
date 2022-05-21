@@ -3,7 +3,6 @@ import {
   DEFAULT_FEN,
   K_SIDE_CASTLE,
   pieceCode,
-  pieceNameToCode,
   Q_SIDE_CASTLE,
   rookSides,
   WHITE,
@@ -15,6 +14,7 @@ import {
 } from "@/constants/chess.js";
 import Board from "./board.js";
 import Move from "./move.js";
+import Zobrist from "./zobrist.js";
 
 export default class ChessGame {
   currentPlayer = WHITE;
@@ -27,22 +27,24 @@ export default class ChessGame {
   moveCount = 1;
   moves = [];
   history = [];
+  hashHistory = [];
 
   constructor(fen = DEFAULT_FEN) {
     this.board = new Board();
+    this.zobrist = new Zobrist(this);
     this.fen = fen;
     this.buildMoves();
+    this.zobrist.loadBoard();
   }
 
   generatePseudoLegalMoves() {
     const moves = [];
-    for (const piece of this.board.squares) {
-      if (piece && piece.color === this.currentPlayer) {
-        if (piece.type === pieceCode.pawn)
-          Move.generatePawnMoves(piece, this, moves);
-        else Move.generatePieceMoves(piece, this, moves);
-      }
-    }
+    this.board.mapColorList(this.currentPlayer, (piece) => {
+      if (piece.type === pieceCode.pawn)
+        Move.generatePawnMoves(piece, this, moves);
+      else Move.generatePieceMoves(piece, this, moves);
+    });
+
     return moves;
   }
 
@@ -58,7 +60,7 @@ export default class ChessGame {
       if (!this.inCheck(currentPlayer)) {
         legalMoves.push(pseudoMove);
       }
-      this.undoMove();
+      this.undoUglyMove();
     }
 
     return legalMoves;
@@ -130,19 +132,24 @@ export default class ChessGame {
       moveCount: this.moveCount,
       currentPlayer: this.currentPlayer,
     });
+    this.hashHistory.push(this.zobrist.hash);
   }
 
   makeUglyMove(move) {
     this.generateHistory(move);
+    this.zobrist.loadMove(move);
 
-    this.board.squares[move.startIndex] = null;
+    this.board.deletePiece(move.piece);
+
     this.enPassantIndex = move.enPassant ? move.targetIndex : null;
+
     if (this.currentPlayer === BLACK) this.moveCount++;
     this.currentPlayer = this.opponentColor;
 
     this.checkCastlingBeforeMove(move);
     if (move.capture) {
-      this.board.squares[move.capture.index] = null;
+      const capturePiece = this.getPiece(move.capture.index);
+      this.board.deletePiece(capturePiece);
     }
 
     if (move.piece.type === pieceCode.pawn) {
@@ -152,8 +159,11 @@ export default class ChessGame {
     } else {
       const piece = move.piece;
       piece.index = move.targetIndex;
-      this.board.squares[move.targetIndex] = piece;
+      this.board.addPiece(piece);
     }
+
+    if (move.piece.type === pieceCode.king)
+      this.board.kings[move.piece.color] = move.piece;
 
     if (move.piece.type === pieceCode.pawn || move.capture)
       this.halfMoveCount = 0;
@@ -165,9 +175,10 @@ export default class ChessGame {
     this.buildMoves();
   }
 
-  undoMove() {
+  undoUglyMove() {
     if (this.history.length > 0) {
       const old = this.history.pop();
+      const oldHash = this.hashHistory.pop();
 
       const move = old.move;
       const capture = move.capture;
@@ -183,13 +194,14 @@ export default class ChessGame {
       this.halfMoveCount = old.halfMoveCount;
       this.moveCount = old.moveCount;
       this.currentPlayer = old.currentPlayer;
+      this.zobrist.hash = oldHash;
 
+      this.board.deletePiece(piece);
       piece.index = move.startIndex;
-      this.board.squares[move.startIndex] = piece;
-      this.board.squares[move.targetIndex] = null;
+      this.board.addPiece(piece);
 
-      if (move.capture) {
-        this.board.squares[capture.index] = capture;
+      if (capture) {
+        this.board.addPiece(capture);
       }
 
       if (move.castling) {
@@ -204,31 +216,35 @@ export default class ChessGame {
         }
 
         const rook = this.getPiece(rookEndIndex);
+        this.board.deletePiece(rook);
         rook.index = rookStartIndex;
-
-        this.board.squares[rookEndIndex] = null;
-        this.board.squares[rookStartIndex] = rook;
+        this.board.addPiece(rook);
       }
     }
+  }
+
+  undoMove(move) {
+    this.undoUglyMove(move);
+    this.buildMoves();
   }
 
   makeCastlingMove(move) {
     const piece = move.piece;
 
     if (move.castling & K_SIDE_CASTLE) {
-      this.board.squares[piece.index + 2] = piece;
-      const rook = this.getPiece(rookSides[piece.color].k);
-      this.board.squares[rook.index] = null;
-      this.board.squares[rook.index - 2] = rook;
-      rook.index -= 2;
       piece.index += 2;
+      this.board.addPiece(piece);
+      const rook = this.getPiece(rookSides[piece.color].k);
+      this.board.deletePiece(rook);
+      rook.index -= 2;
+      this.board.addPiece(rook);
     } else if (move.castling & Q_SIDE_CASTLE) {
-      this.board.squares[piece.index - 2] = piece;
-      const rook = this.getPiece(rookSides[piece.color].q);
-      this.board.squares[rook.index] = null;
-      this.board.squares[rook.index + 3] = rook;
-      rook.index += 3;
       piece.index -= 2;
+      this.board.addPiece(piece);
+      const rook = this.getPiece(rookSides[piece.color].q);
+      this.board.deletePiece(rook);
+      rook.index += 3;
+      this.board.addPiece(rook);
     }
 
     this.castling[piece.color] = 0;
@@ -242,7 +258,7 @@ export default class ChessGame {
       // Update pawn as queen when it is in last square
       piece.changePieceType(pieceTypeToCode[piece.color][move.promotion]);
     }
-    this.board.squares[move.targetIndex] = piece;
+    this.board.addPiece(piece);
   }
 
   loadGameWithFen(fen) {
@@ -300,7 +316,6 @@ export default class ChessGame {
         const sq = this.getPiece(index);
         if (sq != null) {
           let captureOffsets = mailboxOffsets[sq.type];
-
           if (
             sq.isSlide &&
             sq.color !== color &&
@@ -347,7 +362,7 @@ export default class ChessGame {
           if (move.capture) captures++;
         }
       }
-      this.undoMove();
+      this.undoUglyMove();
     }
 
     return { count: totalMove, captures };

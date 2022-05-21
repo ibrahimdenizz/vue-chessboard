@@ -19,6 +19,7 @@ export default class Move {
   capture = null;
   castling = 0;
   enPassant = false;
+  enPassantCapture = false;
   promotion = null;
   score = 0;
 
@@ -27,6 +28,7 @@ export default class Move {
     targetIndex,
     capture = null,
     enPassant = false,
+    enPassantCapture = false,
     castling = 0,
     promotion = null,
     chess,
@@ -36,6 +38,7 @@ export default class Move {
     this.targetIndex = targetIndex;
     this.capture = capture;
     this.enPassant = enPassant;
+    this.enPassantCapture = enPassantCapture;
     this.castling = castling;
     this.promotion = promotion;
     this.setScore(chess);
@@ -122,6 +125,7 @@ export default class Move {
           const enPassantPiece = chess.getPiece(chess.enPassantIndex);
           moveParams.capture = enPassantPiece;
           moveParams.targetIndex = enPassantCaptureIndex;
+          moveParams.enPassantCapture = true;
           moves.push(new Move(moveParams));
         }
       }

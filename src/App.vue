@@ -17,7 +17,7 @@
       'text-align': 'center',
     }"
   >
-    Fen: {{ fen }}
+    Zobrist: {{ game.zobrist.key }}
   </p>
   <div class="home">
     <chess-board
@@ -54,7 +54,7 @@ export default {
     const game = new ChessGame();
     return {
       chessBoardSize: width > height ? height * ratio : width * ratio,
-      fen: "" /* "r5qk/7p/1bpp1p2/pp2p3/4P3/PB2BP1b/1PP2P1P/R2Q1RK1/ w - - 1 2" */,
+      fen: "8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 0 1",
       game,
       randomAI: new ChessAI({ type: "random" }),
       normalAI: new ChessAI({ type: "normal", depth: 3 }),
@@ -88,6 +88,7 @@ export default {
       if (this.gameType !== "two-player") this.makeAiMove(game);
     },
     async makeAiMove(game) {
+      console.log(game.moves);
       if (this.gameType === "random-ai") {
         if (!game.gameOver && game.currentPlayer === "black") {
           const aiMove = this.randomAI.selectMove(game.copy);
