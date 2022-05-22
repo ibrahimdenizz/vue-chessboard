@@ -59,6 +59,7 @@ export default {
   },
   methods: {
     isActivePiece(piece) {
+      if (this.game.gameOver) return false;
       if (this.disableWhiteMoves && this.game.currentPlayer === WHITE)
         return false;
       if (this.disableBlackMoves && this.game.currentPlayer === BLACK)
@@ -66,7 +67,7 @@ export default {
       return piece && piece.color === this.game.currentPlayer;
     },
     selectPiece(piece) {
-      if (!this.isActivePiece(piece)) return;
+      if (!this.isActivePiece(piece) || this.game.gameOver) return;
       this.selectedPiece = piece;
       this.validMoves = this.game.getPieceMoves(piece);
     },

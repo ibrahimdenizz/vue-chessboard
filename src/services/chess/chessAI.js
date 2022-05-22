@@ -65,6 +65,8 @@ export default class ChessAI {
   }
 
   search(depth, alpha, beta, game, root = 0) {
+    if (root > 0 && game.hashHistory.includes(game.zobrist.hash)) return 0;
+
     const storedHash = this.transpositionTable.getStoredHash(
       {
         depth: depth,
@@ -168,7 +170,7 @@ export default class ChessAI {
     return 1 - Math.min(1, notPawnCount * (1 / endGameValue));
   }
 
-  endGameEval(friendlyKing, opponentKing, friendlyNotPawnCount) {
+  endGameEval(friendlyKing, opponentKing, friendlyNotPawnMaterial) {
     let evaluation = 0;
 
     const { x: opponentKingX, y: opponentKingY } = opponentKing.position;
@@ -185,7 +187,7 @@ export default class ChessAI {
     evaluation += 14 - betweenDest;
 
     const endGameWeight =
-      1 - Math.min(1, friendlyNotPawnCount * (1 / endGameValue));
+      1 - Math.min(1, friendlyNotPawnMaterial * (1 / endGameValue));
 
     return evaluation * 10 * endGameWeight;
   }
@@ -194,30 +196,47 @@ export default class ChessAI {
     const game = this.game || _game;
     const board = game.board;
     const kings = board.kings;
+    let whiteEval = 0;
+    let blackEval = 0;
 
-    let whiteEval = this.getColorEval(WHITE, board);
-    let blackEval = this.getColorEval(BLACK, board);
+    const whiteMaterial = this.getColorMaterial(WHITE, board);
+    const blackMaterial = this.getColorMaterial(BLACK, board);
+    whiteEval += whiteMaterial;
+    blackEval += blackMaterial;
 
+    const whiteNotPawnMaterial =
+      whiteMaterial - board.getColorNotPawnNum(WHITE) * Coefficients.p;
+    const blackNotPawnMaterial =
+      blackMaterial - board.getColorNotPawnNum(BLACK) * Coefficients.p;
     whiteEval += this.endGameEval(
       kings.white,
       kings.black,
-      board.getColorNotPawnNum(WHITE)
+      whiteNotPawnMaterial
     );
     blackEval += this.endGameEval(
       kings.black,
       kings.white,
-      board.getColorNotPawnNum(BLACK)
+      blackNotPawnMaterial
     );
+
+    whiteEval += this.getPieceWeights(WHITE, board);
+    blackEval += this.getPieceWeights(BLACK, board);
 
     return (whiteEval - blackEval) * Coefficients[game.currentPlayer];
   }
 
-  getColorEval(color, board) {
+  getColorMaterial(color, board) {
     let colorEval = 0;
     board.mapColorList(color, (piece) => {
-      colorEval +=
-        Coefficients[piece.type] +
-        SQUARE_WEIGHT_TABLES[piece.color][piece.type][piece.index];
+      colorEval += Coefficients[piece.type];
+    });
+
+    return colorEval;
+  }
+  getPieceWeights(color, board) {
+    let colorEval = 0;
+    board.mapColorList(color, (piece) => {
+      colorEval += SQUARE_WEIGHT_TABLES[piece.color][piece.type][piece.index];
     });
 
     return colorEval;

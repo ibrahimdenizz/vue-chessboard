@@ -105,7 +105,6 @@ export default {
         } else if (this.gameType === "normal-ai") {
           if (!game.gameOver && game.currentPlayer === "black") {
             const aiMove = this.normalAI.selectMove(game.copy);
-            console.log(aiMove);
             game.makeMove(aiMove);
           }
         }

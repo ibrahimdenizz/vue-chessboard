@@ -40,10 +40,10 @@ export class TranspositionTable {
     return null;
   }
 
-  addEvaluation({ depth, score, type, move }, game = null) {
+  addEvaluation(newHash, game = null) {
     const hash = this.getHash(game);
 
-    const newHash = { hash, score, depth, type, move };
+    newHash.hash = hash;
 
     this.hashes[hash] = newHash;
   }

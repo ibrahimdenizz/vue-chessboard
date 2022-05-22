@@ -74,13 +74,18 @@ export default class Move {
 
     if (chess.inAttack(this.targetIndex, this.piece.color))
       this.score -= Coefficients[this.piece.type];
+
+    if (
+      this.piece.type !== pieceCode.pawn &&
+      chess.inPawnAttack(this.targetIndex, this.piece.color)
+    )
+      this.score -= Coefficients[this.piece.type];
   }
 
-  static generatePawnMoves(piece, chess, moves) {
+  static generatePawnMoves(piece, chess, moves, onlyCapture = false) {
     const validMoves = pieceCodeToMoveOffsets[piece.type][piece.color].map(
       (offset) => offset + piece.index
     );
-    const secondRow = secondRowsWithColor[piece.color];
 
     const moveParams = {
       piece,
@@ -88,6 +93,30 @@ export default class Move {
       chess,
     };
 
+    if (!onlyCapture) {
+      this.generatePawnForward(piece, chess, moves, validMoves, moveParams);
+    }
+
+    for (const offset of mailboxOffsets.p[piece.color]) {
+      let index = piece.index;
+      index = mailbox[mailbox64[index] + offset];
+
+      if (index !== -1) {
+        this.generatePawnCapture(
+          piece,
+          chess,
+          moves,
+          validMoves,
+          moveParams,
+          offset,
+          index
+        );
+      }
+    }
+  }
+
+  static generatePawnForward(piece, chess, moves, validMoves, moveParams) {
+    const secondRow = secondRowsWithColor[piece.color];
     if (!this.isIndexValid(validMoves[0])) return [];
 
     if (!chess.getPiece(validMoves[0])) {
@@ -103,32 +132,36 @@ export default class Move {
         }
       }
     }
+  }
 
-    for (const offset of mailboxOffsets.p[piece.color]) {
-      let index = piece.index;
-      index = mailbox[mailbox64[index] + offset];
-      if (index !== -1) {
-        const enPassantCaptureIndex =
-          offset < 0 ? chess.enPassantIndex - 8 : chess.enPassantIndex + 8;
+  static generatePawnCapture(
+    piece,
+    chess,
+    moves,
+    validMoves,
+    moveParams,
+    offset,
+    index
+  ) {
+    const enPassantCaptureIndex =
+      offset < 0 ? chess.enPassantIndex - 8 : chess.enPassantIndex + 8;
 
-        const capture = chess.getPiece(index);
+    const capture = chess.getPiece(index);
 
-        if (capture && capture.color != piece.color) {
-          moveParams.targetIndex = capture.index;
-          moveParams.capture = capture;
-          if (parseInt(validMoves[0] / 8) === lastFileWithColor[piece.color]) {
-            this.generatePromotionMoves(moves, moveParams, capture);
-          } else {
-            moves.push(new Move(moveParams));
-          }
-        } else if (index === enPassantCaptureIndex) {
-          const enPassantPiece = chess.getPiece(chess.enPassantIndex);
-          moveParams.capture = enPassantPiece;
-          moveParams.targetIndex = enPassantCaptureIndex;
-          moveParams.enPassantCapture = true;
-          moves.push(new Move(moveParams));
-        }
+    if (capture && capture.color != piece.color) {
+      moveParams.targetIndex = capture.index;
+      moveParams.capture = capture;
+      if (parseInt(validMoves[0] / 8) === lastFileWithColor[piece.color]) {
+        this.generatePromotionMoves(moves, moveParams);
+      } else {
+        moves.push(new Move(moveParams));
       }
+    } else if (index === enPassantCaptureIndex) {
+      const enPassantPiece = chess.getPiece(chess.enPassantIndex);
+      moveParams.capture = enPassantPiece;
+      moveParams.targetIndex = enPassantCaptureIndex;
+      moveParams.enPassantCapture = true;
+      moves.push(new Move(moveParams));
     }
   }
 
@@ -144,7 +177,7 @@ export default class Move {
     moveParams.promotion = null;
   }
 
-  static generatePieceMoves(piece, chess, moves) {
+  static generatePieceMoves(piece, chess, moves, onlyCapture = false) {
     const offsets = mailboxOffsets[piece.type];
     const moveParams = {
       piece,
@@ -153,12 +186,9 @@ export default class Move {
     };
 
     for (const offset of offsets) {
-      /* for all knight or ray directions */
       let index = piece.index;
       index = mailbox[mailbox64[index] + offset];
       while (index != -1) {
-        /* starting with from square */
-        /* next square along the ray j */
         const sq = chess.getPiece(index);
         if (sq != null) {
           if (sq.color != piece.color) {
@@ -170,10 +200,12 @@ export default class Move {
           break;
         }
 
-        moveParams.targetIndex = index;
-        moves.push(new Move(moveParams)); /* quiet move from i to n */
+        if (!onlyCapture) {
+          moveParams.targetIndex = index;
+          moves.push(new Move(moveParams));
+        }
 
-        if (!piece.isSlide) break; /* next direction */
+        if (!piece.isSlide) break;
 
         index = mailbox[mailbox64[index] + offset];
       }

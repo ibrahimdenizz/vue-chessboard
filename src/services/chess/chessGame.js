@@ -37,21 +37,19 @@ export default class ChessGame {
     this.zobrist.loadBoard();
   }
 
-  generatePseudoLegalMoves() {
+  generatePseudoLegalMoves(onlyCapture = false) {
     const moves = [];
     this.board.mapColorList(this.currentPlayer, (piece) => {
       if (piece.type === pieceCode.pawn)
-        Move.generatePawnMoves(piece, this, moves);
-      else Move.generatePieceMoves(piece, this, moves);
+        Move.generatePawnMoves(piece, this, moves, onlyCapture);
+      else Move.generatePieceMoves(piece, this, moves, onlyCapture);
     });
 
     return moves;
   }
 
   generateMoves(options) {
-    let pseudoMoves = this.generatePseudoLegalMoves();
-    if (options?.onlyCapture)
-      pseudoMoves = pseudoMoves.filter((x) => x.capture);
+    let pseudoMoves = this.generatePseudoLegalMoves(options?.onlyCapture);
 
     const currentPlayer = this.currentPlayer;
     const legalMoves = [];
@@ -379,8 +377,23 @@ export default class ChessGame {
     return this.currentPlayer === WHITE ? BLACK : WHITE;
   }
 
+  get inThreeFold() {
+    if (!this.hashHistory.length) return false;
+
+    return this.hashHistory.filter((x) => x === this.zobrist.hash).length >= 3;
+  }
+
+  get inFiftyMove() {
+    return this.halfMoveCount >= 100;
+  }
+
   get gameOver() {
-    return !this.moves.length || this.board.pieceCount === 2;
+    return (
+      !this.moves.length ||
+      this.board.pieceCount === 2 ||
+      this.inThreeFold ||
+      this.inFiftyMove
+    );
   }
 
   get winner() {
