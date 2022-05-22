@@ -1,9 +1,3 @@
-<!-- 
-  This file is just for testing library. 
-  Actual library files exported in index.js.
-  You can find actual files şf you follow index.js imports.
- -->
-
 <template>
   <p
     :style="{
