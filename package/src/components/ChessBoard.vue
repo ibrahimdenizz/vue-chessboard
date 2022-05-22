@@ -7,6 +7,7 @@ export default {
   name: "ChessBoard",
   data() {
     return {
+      defaultGame: new ChessGame(),
       validMoves: [],
       selectedPiece: null,
       render: false,
@@ -23,7 +24,6 @@ export default {
     },
     game: {
       type: ChessGame,
-      default: new ChessGame(),
     },
     disableWhiteMoves: {
       type: Boolean,
@@ -38,43 +38,53 @@ export default {
   components: {
     BoardGround,
   },
+  computed: {
+    chessGame() {
+      return this.game || this.defaultGame;
+    },
+  },
   watch: {
-    "game.fen": {
+    fen(newFEN) {
+      if (this.chessGame.fen !== newFEN)
+        this.chessGame.loadGameWithFen(newFEN || DEFAULT_FEN);
+    },
+    "chessGame.fen": {
       handler(newFen) {
         this.$emit("update:fen", newFen);
-        if (this.game.gameOver)
+        if (this.chessGame.gameOver)
           this.$emit("onGameOver", {
-            winner: this.game.winner,
-            game: this.game,
+            winner: this.chessGame.winner,
+            game: this.chessGame,
           });
       },
     },
     game() {
       this.selectedPiece = null;
       this.validMoves = [];
+      this.defaultGame = new ChessGame();
     },
   },
   created() {
-    this.game.loadGameWithFen(this.fen || DEFAULT_FEN);
+    this.chessGame.loadGameWithFen(this.fen || DEFAULT_FEN);
   },
   methods: {
     isActivePiece(piece) {
-      if (this.game.gameOver) return false;
-      if (this.disableWhiteMoves && this.game.currentPlayer === WHITE)
+      if (this.chessGame.gameOver) return false;
+      if (this.disableWhiteMoves && this.chessGame.currentPlayer === WHITE)
         return false;
-      if (this.disableBlackMoves && this.game.currentPlayer === BLACK)
+      if (this.disableBlackMoves && this.chessGame.currentPlayer === BLACK)
         return false;
-      return piece && piece.color === this.game.currentPlayer;
+      return piece && piece.color === this.chessGame.currentPlayer;
     },
     selectPiece(piece) {
-      if (!this.isActivePiece(piece) || this.game.gameOver) return;
+      if (!this.isActivePiece(piece) || this.chessGame.gameOver) return;
       this.selectedPiece = piece;
-      this.validMoves = this.game.getPieceMoves(piece);
+      this.validMoves = this.chessGame.getPieceMoves(piece);
     },
     makeMove(move) {
       this.validMoves = [];
       this.selectedPiece = null;
-      this.$emit("onMovePlayed", { move, game: this.game });
+      this.$emit("onMovePlayed", { move, game: this.chessGame });
     },
     getMoveStyle(move) {
       if (move.promotion && move.promotion !== "q") return { display: "none" };
@@ -93,7 +103,7 @@ export default {
   <div>
     <div class="board" :style="{ width: `${size}px`, height: `${size}px` }">
       <board-ground
-        :game="game"
+        :game="chessGame"
         :size="size"
         @selectPiece="selectPiece"
         :isActivePiece="isActivePiece"

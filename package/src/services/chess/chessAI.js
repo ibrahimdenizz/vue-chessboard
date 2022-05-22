@@ -25,11 +25,12 @@ export default class ChessAI {
     this.bestMove = null;
   }
 
-  selectMove(_game) {
+  selectMove(_game, options) {
     const game = this.game || _game;
     if (this.type === "random") return this.selectRandomMove(game.moves);
     if (this.type === "normal") {
-      this.resetDebug();
+      if (options?.debug) this.resetDebug();
+
       this.bestMove = null;
       this.search(
         this.depth,
@@ -37,7 +38,9 @@ export default class ChessAI {
         Number.POSITIVE_INFINITY,
         game
       );
-      this.logDebug();
+
+      if (options?.debug) this.logDebug();
+
       return this.bestMove;
     }
   }

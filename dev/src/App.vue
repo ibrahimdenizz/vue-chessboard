@@ -50,8 +50,8 @@
 </template>
 
 <script>
-import ChessBoard from "@/components/ChessBoard.vue";
-import { ChessAI, ChessGame } from "./services/chess";
+import { ChessBoard, ChessAI, ChessGame } from "@ibrahimdeniz/vue-chessboard";
+import "@ibrahimdeniz/vue-chessboard/dist/style.css";
 
 const ratio = 0.8;
 
@@ -74,11 +74,6 @@ export default {
   },
   components: {
     ChessBoard,
-  },
-  watch: {
-    fen(newValue) {
-      console.log(newValue);
-    },
   },
   mounted() {
     window.addEventListener("resize", this.myEventHandler);
