@@ -1,7 +1,7 @@
 {
   "name": "@ibrahimdeniz/vue-chessboard",
   "description": "Chessboard component for vue based on fen notation",
-  "version": "0.1.3",
+  "version": "0.1.5",
   "author": {
     "name": "İbrahim Deniz",
     "email": "dnzibrahim1@gmail.com"
@@ -43,8 +43,7 @@
     "preview": "vite --config dev.vite.config.js preview",
     "build:dev": "vite --config dev.vite.config.js build"
   },
-  "dependencies": {
-    "uuid": "^8.3.2",
+  "peerDependencies": {
     "vue": "^3.2.33"
   },
   "devDependencies": {
