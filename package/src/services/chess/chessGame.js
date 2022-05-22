@@ -26,6 +26,7 @@ export default class ChessGame {
   halfMoveCount = 0;
   moveCount = 1;
   moves = [];
+  uglyMoves = [];
   history = [];
   redoHistory = [];
   hashHistory = [];
@@ -69,7 +70,9 @@ export default class ChessGame {
   }
 
   buildMoves() {
-    this.moves = this.generateMoves();
+    this.uglyMoves = this.generateMoves();
+    this.uglyMoves.forEach((uglyMove) => uglyMove.setSAN(this.uglyMoves));
+    this.moves = this.uglyMoves.map((uglyMove) => uglyMove.pretty);
   }
 
   getPiece(x, y = null) {
@@ -77,7 +80,7 @@ export default class ChessGame {
   }
 
   getPieceMoves(piece) {
-    return this.moves.filter((move) => move.piece.equals(piece));
+    return this.uglyMoves.filter((move) => move.piece.equals(piece));
   }
 
   checkCastlingBeforeMove(move) {
@@ -142,7 +145,26 @@ export default class ChessGame {
   }
 
   makeMove(move) {
-    this.makeUglyMove(move);
+    let uglyMove;
+    if (move instanceof Move) uglyMove = move;
+    else if (typeof move === "string" || move?.san) {
+      uglyMove = this.uglyMoves.find((_uglyMove) => _uglyMove.san === move);
+    } else {
+      uglyMove = this.uglyMoves.find((_uglyMove) => {
+        if (
+          move.from === _uglyMove.startString &&
+          move.to === _uglyMove.targetString
+        ) {
+          if (_uglyMove.promotion) {
+            return _uglyMove.promotion === move.promotion;
+          }
+
+          return true;
+        }
+      });
+    }
+
+    this.makeUglyMove(uglyMove);
     this.redoHistory = [];
     this.buildMoves();
   }
@@ -400,7 +422,7 @@ export default class ChessGame {
 
   get gameOver() {
     return (
-      !this.moves.length ||
+      !this.uglyMoves.length ||
       this.board.pieceCount === 2 ||
       this.inThreeFold ||
       this.inFiftyMove

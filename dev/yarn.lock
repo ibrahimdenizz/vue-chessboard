@@ -40,10 +40,10 @@ __metadata:
 
 "@ibrahimdeniz/vue-chessboard@file:../package::locator=dev%40workspace%3A.":
   version: 0.1.5
-  resolution: "@ibrahimdeniz/vue-chessboard@file:../package#../package::hash=0e7cf2&locator=dev%40workspace%3A."
+  resolution: "@ibrahimdeniz/vue-chessboard@file:../package#../package::hash=5f5965&locator=dev%40workspace%3A."
   peerDependencies:
     vue: ^3.2.33
-  checksum: c92727c275f71b632df5303979ffc5c688136704a89af2b8290a826f8c98e84837b25f9ce4ab12d29f52bdd5b2a4582f5b4db0c698a720d166484d65b6870fb4
+  checksum: 31c3cac9756729dd0905fb0c566f47e5f89566bc67cfa8bffdb7f5cf59f9566bdff84b5ec3deb4d0ffd90ddd6f0913d347653d88c00ba9368946ed8306d5de19
   languageName: node
   linkType: hard
 

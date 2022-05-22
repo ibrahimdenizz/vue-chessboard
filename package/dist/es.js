@@ -6,6 +6,7 @@ var __publicField = (obj, key, value) => {
 };
 import { openBlock, createElementBlock, createStaticVNode, createElementVNode, resolveComponent, createBlock, createCommentVNode, Fragment, renderList, normalizeClass, createVNode, normalizeStyle, toDisplayString } from "vue";
 const DEFAULT_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", WHITE = "white", BLACK = "black", K_SIDE_CASTLE = 2, Q_SIDE_CASTLE = 1;
+const RANKS = ["a", "b", "c", "d", "e", "f", "g", "h"];
 const rookSides = {
   black: { k: 7, q: 0 },
   white: {
@@ -949,23 +950,94 @@ class Move {
   get isCheck() {
     return this.capture && this.capture.type === pieceCode.king;
   }
-  get startPosition() {
+  indexToPosition(index) {
     return {
-      y: parseInt(this.startIndex / 8),
-      x: this.startIndex % 8
+      y: parseInt(index / 8),
+      x: index % 8
     };
   }
+  indexToString(index) {
+    return "" + RANKS[index % 8] + (parseInt(index / 8) + 1);
+  }
+  get startPosition() {
+    return this.indexToPosition(this.startIndex);
+  }
   get targetPosition() {
-    return {
-      y: parseInt(this.targetIndex / 8),
-      x: this.targetIndex % 8
-    };
+    return this.indexToPosition(this.targetIndex);
+  }
+  get startString() {
+    return this.indexToString(this.startIndex);
+  }
+  get targetString() {
+    return this.indexToString(this.targetIndex);
   }
   get isTargetLastFile() {
     if (this.piece.color === WHITE)
       return this.targetPosition.y === 0;
     else
       return this.targetPosition.y === 7;
+  }
+  get pretty() {
+    let castling = false;
+    if (this.castling & K_SIDE_CASTLE)
+      castling = "king-side";
+    else if (this.castling & Q_SIDE_CASTLE)
+      castling = "queen-side";
+    return {
+      san: this.san,
+      piece: this.piece.type,
+      from: this.startString,
+      to: this.targetString,
+      castling,
+      capture: this.capture ? this.capture.type : null,
+      promotion: this.promotion,
+      enPassant: this.enPassant
+    };
+  }
+  getSanConflict(moves) {
+    let conflict = "";
+    const startPosition = this.startPosition;
+    this.targetPosition;
+    let sameRank = false, sameFile = false;
+    for (const move of moves) {
+      if (move.piece.type === this.piece.type && move.startIndex !== this.startIndex && move.targetIndex === this.targetIndex) {
+        if (startPosition.x === move.startPosition.x)
+          sameRank = true;
+        if (startPosition.y === move.startPosition.y)
+          sameFile = true;
+        if (sameRank && sameFile)
+          break;
+      }
+    }
+    if (sameFile)
+      conflict += RANKS[startPosition.x];
+    if (sameRank)
+      conflict += startPosition.y + 1;
+    return conflict;
+  }
+  setSAN(moves) {
+    this.san = "";
+    if (this.castling === K_SIDE_CASTLE)
+      this.san = "o-o";
+    else if (this.castling === Q_SIDE_CASTLE)
+      this.san = "o-o-o";
+    else {
+      if (this.piece.type !== pieceCode.pawn) {
+        this.san += this.piece.type.toUpperCase();
+        this.san += this.getSanConflict(moves);
+      }
+      if (this.capture) {
+        if (this.piece.type === pieceCode.pawn) {
+          this.san += RANKS[this.startPosition.x];
+        }
+        this.san += "x";
+      }
+      const targetPosition = this.targetPosition;
+      this.san += RANKS[targetPosition.x];
+      this.san += targetPosition.y + 1;
+      if (this.promotion)
+        this.san += "=" + this.promotion.toUpperCase();
+    }
   }
   setScore(chess) {
     if (this.capture)
@@ -1028,7 +1100,6 @@ class Move {
       const enPassantPiece = chess.getPiece(chess.enPassantIndex);
       moveParams.capture = enPassantPiece;
       moveParams.targetIndex = enPassantCaptureIndex;
-      moveParams.enPassantCapture = true;
       moves.push(new Move(moveParams));
     }
   }
@@ -1203,6 +1274,7 @@ class ChessGame {
     __publicField(this, "halfMoveCount", 0);
     __publicField(this, "moveCount", 1);
     __publicField(this, "moves", []);
+    __publicField(this, "uglyMoves", []);
     __publicField(this, "history", []);
     __publicField(this, "redoHistory", []);
     __publicField(this, "hashHistory", []);
@@ -1238,13 +1310,15 @@ class ChessGame {
     return legalMoves;
   }
   buildMoves() {
-    this.moves = this.generateMoves();
+    this.uglyMoves = this.generateMoves();
+    this.uglyMoves.forEach((uglyMove) => uglyMove.setSAN(this.uglyMoves));
+    this.moves = this.uglyMoves.map((uglyMove) => uglyMove.pretty);
   }
   getPiece(x, y = null) {
     return this.board.getPiece(x, y);
   }
   getPieceMoves(piece) {
-    return this.moves.filter((move) => move.piece.equals(piece));
+    return this.uglyMoves.filter((move) => move.piece.equals(piece));
   }
   checkCastlingBeforeMove(move) {
     const piece = move.piece;
@@ -1301,7 +1375,22 @@ class ChessGame {
       this.halfMoveCount++;
   }
   makeMove(move) {
-    this.makeUglyMove(move);
+    let uglyMove;
+    if (move instanceof Move)
+      uglyMove = move;
+    else if (typeof move === "string" || (move == null ? void 0 : move.san)) {
+      uglyMove = this.uglyMoves.find((_uglyMove) => _uglyMove.san === move);
+    } else {
+      uglyMove = this.uglyMoves.find((_uglyMove) => {
+        if (move.from === _uglyMove.startString && move.to === _uglyMove.targetString) {
+          if (_uglyMove.promotion) {
+            return _uglyMove.promotion === move.promotion;
+          }
+          return true;
+        }
+      });
+    }
+    this.makeUglyMove(uglyMove);
     this.redoHistory = [];
     this.buildMoves();
   }
@@ -1503,7 +1592,7 @@ class ChessGame {
     return this.halfMoveCount >= 100;
   }
   get gameOver() {
-    return !this.moves.length || this.board.pieceCount === 2 || this.inThreeFold || this.inFiftyMove;
+    return !this.uglyMoves.length || this.board.pieceCount === 2 || this.inThreeFold || this.inFiftyMove;
   }
   get winner() {
     if (this.gameOver) {
@@ -1584,9 +1673,9 @@ class ChessGame {
   }
 }
 class TranspositionTable {
-  constructor(game) {
+  constructor(game2) {
     __publicField(this, "hashes", {});
-    this.game = game;
+    this.game = game2;
   }
   get hash() {
     return this.game.zobrist.hash;
@@ -1594,18 +1683,18 @@ class TranspositionTable {
   clear() {
     this.hashes = {};
   }
-  getHash(game) {
-    if (game)
-      return game.zobrist.hash;
+  getHash(game2) {
+    if (game2)
+      return game2.zobrist.hash;
     else
       return this.hash;
   }
-  getMove(game = null) {
-    const hash = this.getHash(game);
+  getMove(game2 = null) {
+    const hash = this.getHash(game2);
     return entries[hash].move;
   }
-  getStoredHash({ depth, alpha, beta }, game = null) {
-    const hash = this.getHash(game);
+  getStoredHash({ depth, alpha, beta }, game2 = null) {
+    const hash = this.getHash(game2);
     const storedHash = this.hashes[hash];
     if (storedHash && depth <= storedHash.depth) {
       if (storedHash.type === TT_EXACT)
@@ -1617,14 +1706,14 @@ class TranspositionTable {
     }
     return null;
   }
-  addEvaluation(newHash, game = null) {
-    const hash = this.getHash(game);
+  addEvaluation(newHash, game2 = null) {
+    const hash = this.getHash(game2);
     newHash.hash = hash;
     this.hashes[hash] = newHash;
   }
 }
 class ChessAI {
-  constructor({ type = "normal", depth = 1, game = null }) {
+  constructor({ type = "normal", depth = 1, fen = DEFAULT_FEN }) {
     __publicField(this, "positionCount", 0);
     __publicField(this, "cutOff", 0);
     __publicField(this, "quiesceCount", 0);
@@ -1632,24 +1721,26 @@ class ChessAI {
     __publicField(this, "bestEval", null);
     this.type = type;
     this.depth = depth;
-    this.game = game;
-    this.transpositionTable = new TranspositionTable(game);
+    this.game = new ChessGame(fen);
+    this.transpositionTable = new TranspositionTable(this.game);
     this.bestMove = null;
   }
-  selectMove(_game, options) {
-    const game = _game || this.game;
-    const type = options.type || this.type;
-    const depth = options.depth || this.depth;
+  selectMove(fen, options) {
+    const type = (options == null ? void 0 : options.type) || this.type;
+    const depth = (options == null ? void 0 : options.depth) || this.depth;
+    console.log(depth);
+    if (fen)
+      this.game = new ChessGame(fen);
     if (type === "random")
-      return this.selectRandomMove(game.moves);
+      return this.selectRandomMove(game.uglyMoves);
     if (type === "normal") {
       if (options == null ? void 0 : options.debug)
         this.resetDebug();
       this.bestMove = null;
-      this.search(depth, Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY, game);
+      this.search(depth, Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY, this.game);
       if (options == null ? void 0 : options.debug)
         this.logDebug();
-      return this.bestMove;
+      return this.bestMove.pretty;
     }
   }
   resetDebug() {
@@ -1670,14 +1761,14 @@ class ChessAI {
   selectRandomMove(moves) {
     return moves[Math.floor(Math.random() * moves.length)];
   }
-  search(depth, alpha, beta, game, root = 0) {
-    if (root > 0 && game.hashHistory.includes(game.zobrist.hash))
+  search(depth, alpha, beta, game2, root = 0) {
+    if (root > 0 && game2.hashHistory.includes(game2.zobrist.hash))
       return 0;
     const storedHash = this.transpositionTable.getStoredHash({
       depth,
       alpha,
       beta
-    }, game);
+    }, game2);
     if (storedHash !== null) {
       this.transpositionNum++;
       if (root === 0)
@@ -1686,11 +1777,11 @@ class ChessAI {
     }
     if (depth === 0) {
       this.positionCount++;
-      return this.quiesce(alpha, beta, game);
+      return this.quiesce(alpha, beta, game2);
     }
-    const moves = game.generateMoves();
+    const moves = game2.generateMoves();
     if (moves.length === 0) {
-      if (game.inCheck()) {
+      if (game2.inCheck()) {
         return Number.NEGATIVE_INFINITY;
       }
       return 0;
@@ -1699,10 +1790,9 @@ class ChessAI {
     let bestMove;
     moves.sort((a, b) => b.score - a.score);
     for (const move of moves) {
-      game.makeUglyMove(move);
-      let evaluation = this.search(depth - 1, -beta, -alpha, game, root + 1);
-      evaluation = -evaluation;
-      game.undoUglyMove();
+      game2.makeUglyMove(move);
+      let evaluation = -this.search(depth - 1, -beta, -alpha, game2, root + 1);
+      game2.undoUglyMove();
       if (evaluation >= beta) {
         this.cutOff++;
         this.transpositionTable.addEvaluation({
@@ -1710,7 +1800,7 @@ class ChessAI {
           move,
           score: beta,
           type: TT_LOWER
-        }, game);
+        }, game2);
         return beta;
       }
       if (evaluation > alpha) {
@@ -1718,6 +1808,7 @@ class ChessAI {
         alpha = evaluation;
         bestMove = move;
         if (root === 0) {
+          this.bestEval = alpha;
           this.bestMove = bestMove;
         }
       }
@@ -1727,22 +1818,22 @@ class ChessAI {
       move: bestMove,
       score: alpha,
       type: tt_type
-    }, game);
+    }, game2);
     return alpha;
   }
-  quiesce(alpha, beta, game) {
+  quiesce(alpha, beta, game2) {
     this.quiesceCount++;
-    const stand_pat = this.evaluate(game);
+    const stand_pat = this.evaluate(game2);
     if (stand_pat >= beta)
       return beta;
     if (alpha < stand_pat)
       alpha = stand_pat;
-    const captureMoves = game.generateMoves({ onlyCapture: true });
+    const captureMoves = game2.generateMoves({ onlyCapture: true });
     captureMoves.sort((a, b) => b.score - a.score);
     for (const move of captureMoves) {
-      game.makeUglyMove(move);
-      const score = -this.quiesce(-beta, -alpha, game);
-      game.undoUglyMove();
+      game2.makeUglyMove(move);
+      const score = -this.quiesce(-beta, -alpha, game2);
+      game2.undoUglyMove();
       if (score >= beta)
         return beta;
       if (score > alpha)
@@ -1750,7 +1841,7 @@ class ChessAI {
     }
     return alpha;
   }
-  endGameWeight(notPawnCount) {
+  getEndGameWeight(notPawnCount) {
     return 1 - Math.min(1, notPawnCount * (1 / endGameValue));
   }
   endGameEval(friendlyKing, opponentKing, friendlyNotPawnMaterial, endGameWeight) {
@@ -1768,8 +1859,8 @@ class ChessAI {
     return evaluation * 10 * endGameWeight;
   }
   evaluate(_game) {
-    const game = this.game || _game;
-    const board = game.board;
+    const game2 = this.game || _game;
+    const board = game2.board;
     const kings = board.kings;
     let whiteEval = 0;
     let blackEval = 0;
@@ -1779,13 +1870,13 @@ class ChessAI {
     blackEval += blackMaterial;
     const whiteNotPawnMaterial = whiteMaterial - board.getColorNotPawnNum(WHITE) * Coefficients.p;
     const blackNotPawnMaterial = blackMaterial - board.getColorNotPawnNum(BLACK) * Coefficients.p;
-    const whiteEndGameWeight = this.endGameWeight(whiteNotPawnMaterial);
-    const blackEndGameWeight = this.endGameWeight(blackNotPawnMaterial);
+    const whiteEndGameWeight = this.getEndGameWeight(whiteNotPawnMaterial);
+    const blackEndGameWeight = this.getEndGameWeight(blackNotPawnMaterial);
     whiteEval += this.endGameEval(kings.white, kings.black, whiteNotPawnMaterial, whiteEndGameWeight);
     blackEval += this.endGameEval(kings.black, kings.white, blackNotPawnMaterial, blackEndGameWeight);
     whiteEval += this.getPieceWeights(WHITE, whiteNotPawnMaterial, board);
     blackEval += this.getPieceWeights(BLACK, blackNotPawnMaterial, board);
-    return (whiteEval - blackEval) * Coefficients[game.currentPlayer];
+    return (whiteEval - blackEval) * Coefficients[game2.currentPlayer];
   }
   getColorMaterial(color, board) {
     let colorEval = 0;

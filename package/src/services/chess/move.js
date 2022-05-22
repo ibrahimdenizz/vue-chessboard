@@ -1,5 +1,6 @@
 import {
   Coefficients,
+  RANKS,
   K_SIDE_CASTLE,
   lastFileWithColor,
   mailbox,
@@ -48,23 +49,107 @@ export default class Move {
     return this.capture && this.capture.type === pieceCode.king;
   }
 
-  get startPosition() {
+  indexToPosition(index) {
     return {
-      y: parseInt(this.startIndex / 8),
-      x: this.startIndex % 8,
+      y: parseInt(index / 8),
+      x: index % 8,
     };
   }
 
+  indexToString(index) {
+    return "" + RANKS[index % 8] + (parseInt(index / 8) + 1);
+  }
+
+  get startPosition() {
+    return this.indexToPosition(this.startIndex);
+  }
+
   get targetPosition() {
-    return {
-      y: parseInt(this.targetIndex / 8),
-      x: this.targetIndex % 8,
-    };
+    return this.indexToPosition(this.targetIndex);
+  }
+
+  get startString() {
+    return this.indexToString(this.startIndex);
+  }
+
+  get targetString() {
+    return this.indexToString(this.targetIndex);
   }
 
   get isTargetLastFile() {
     if (this.piece.color === WHITE) return this.targetPosition.y === 0;
     else return this.targetPosition.y === 7;
+  }
+
+  get pretty() {
+    let castling = false;
+
+    if (this.castling & K_SIDE_CASTLE) castling = "king-side";
+    else if (this.castling & Q_SIDE_CASTLE) castling = "queen-side";
+
+    return {
+      san: this.san,
+      piece: this.piece.type,
+      from: this.startString,
+      to: this.targetString,
+      castling,
+      capture: this.capture ? this.capture.type : null,
+      promotion: this.promotion,
+      enPassant: this.enPassant,
+    };
+  }
+
+  getSanConflict(moves) {
+    let conflict = "";
+    const startPosition = this.startPosition;
+    const targetPosition = this.targetPosition;
+    let sameRank = false,
+      sameFile = false;
+
+    for (const move of moves) {
+      if (
+        move.piece.type === this.piece.type &&
+        move.startIndex !== this.startIndex &&
+        move.targetIndex === this.targetIndex
+      ) {
+        if (startPosition.x === move.startPosition.x) sameRank = true;
+        if (startPosition.y === move.startPosition.y) sameFile = true;
+
+        if (sameRank && sameFile) break;
+      }
+    }
+
+    if (sameFile) conflict += RANKS[startPosition.x];
+    if (sameRank) conflict += startPosition.y + 1;
+
+    return conflict;
+  }
+
+  setSAN(moves) {
+    this.san = "";
+    if (this.castling === K_SIDE_CASTLE) this.san = "o-o";
+    else if (this.castling === Q_SIDE_CASTLE) this.san = "o-o-o";
+    else {
+      if (this.piece.type !== pieceCode.pawn) {
+        this.san += this.piece.type.toUpperCase();
+        this.san += this.getSanConflict(moves);
+      }
+
+      if (this.capture) {
+        if (this.piece.type === pieceCode.pawn) {
+          this.san += RANKS[this.startPosition.x];
+        }
+
+        this.san += "x";
+      }
+
+      const targetPosition = this.targetPosition;
+
+      this.san += RANKS[targetPosition.x];
+      this.san += targetPosition.y + 1;
+
+      if (this.promotion) this.san += "=" + this.promotion.toUpperCase();
+    }
   }
 
   setScore(chess) {
@@ -160,7 +245,6 @@ export default class Move {
       const enPassantPiece = chess.getPiece(chess.enPassantIndex);
       moveParams.capture = enPassantPiece;
       moveParams.targetIndex = enPassantCaptureIndex;
-      moveParams.enPassantCapture = true;
       moves.push(new Move(moveParams));
     }
   }

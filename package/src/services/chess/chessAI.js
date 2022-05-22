@@ -8,6 +8,7 @@ import {
   TT_LOWER,
   SQUARE_WEIGHT_TABLES,
   pieceCode,
+  DEFAULT_FEN,
 } from "@/constants/chess";
 import ChessGame from "./chessGame";
 import { TranspositionTable } from "./transpositionTable";
@@ -19,20 +20,21 @@ export default class ChessAI {
   transpositionNum = 0;
   bestEval = null;
 
-  constructor({ type = "normal", depth = 1, game = null }) {
+  constructor({ type = "normal", depth = 1 }) {
     this.type = type;
     this.depth = depth;
-    this.game = game;
-    this.transpositionTable = new TranspositionTable(game);
+    this.transpositionTable = new TranspositionTable(this.game);
     this.bestMove = null;
   }
 
-  selectMove(_game, options) {
-    const game = _game || this.game;
-    const type = options.type || this.type;
-    const depth = options.depth || this.depth;
+  selectMove(fen, options) {
+    const type = options?.type || this.type;
+    const depth = options?.depth || this.depth;
+    console.log(depth);
+    if (fen) this.game = new ChessGame(fen);
+    else return null;
 
-    if (type === "random") return this.selectRandomMove(game.moves);
+    if (type === "random") return this.selectRandomMove(game.uglyMoves);
 
     if (type === "normal") {
       if (options?.debug) this.resetDebug();
@@ -42,12 +44,12 @@ export default class ChessAI {
         depth,
         Number.NEGATIVE_INFINITY,
         Number.POSITIVE_INFINITY,
-        game
+        this.game
       );
 
       if (options?.debug) this.logDebug();
 
-      return this.bestMove;
+      return this.bestMove.pretty;
     }
   }
 
@@ -100,7 +102,6 @@ export default class ChessAI {
     }
 
     const moves = game.generateMoves();
-
     if (moves.length === 0) {
       if (game.inCheck()) {
         return Number.NEGATIVE_INFINITY;
@@ -114,8 +115,7 @@ export default class ChessAI {
 
     for (const move of moves) {
       game.makeUglyMove(move);
-      let evaluation = this.search(depth - 1, -beta, -alpha, game, root + 1);
-      evaluation = -evaluation;
+      let evaluation = -this.search(depth - 1, -beta, -alpha, game, root + 1);
       game.undoUglyMove();
 
       if (evaluation >= beta) {
@@ -138,6 +138,7 @@ export default class ChessAI {
         bestMove = move;
 
         if (root === 0) {
+          this.bestEval = alpha;
           this.bestMove = bestMove;
         }
       }
@@ -178,7 +179,7 @@ export default class ChessAI {
     return alpha;
   }
 
-  endGameWeight(notPawnCount) {
+  getEndGameWeight(notPawnCount) {
     return 1 - Math.min(1, notPawnCount * (1 / endGameValue));
   }
 
@@ -223,8 +224,8 @@ export default class ChessAI {
     const blackNotPawnMaterial =
       blackMaterial - board.getColorNotPawnNum(BLACK) * Coefficients.p;
 
-    const whiteEndGameWeight = this.endGameWeight(whiteNotPawnMaterial);
-    const blackEndGameWeight = this.endGameWeight(blackNotPawnMaterial);
+    const whiteEndGameWeight = this.getEndGameWeight(whiteNotPawnMaterial);
+    const blackEndGameWeight = this.getEndGameWeight(blackNotPawnMaterial);
 
     whiteEval += this.endGameEval(
       kings.white,
@@ -241,7 +242,6 @@ export default class ChessAI {
 
     whiteEval += this.getPieceWeights(WHITE, whiteNotPawnMaterial, board);
     blackEval += this.getPieceWeights(BLACK, blackNotPawnMaterial, board);
-
     return (whiteEval - blackEval) * Coefficients[game.currentPlayer];
   }
 

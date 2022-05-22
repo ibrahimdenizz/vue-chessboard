@@ -6,6 +6,8 @@ export const DEFAULT_FEN =
   Q_SIDE_CASTLE = 1,
   BOTH_SIDE_CASTLE = 3;
 
+export const RANKS = ["a", "b", "c", "d", "e", "f", "g", "h"];
+
 export const rookSides = {
   black: { k: 7, q: 0 },
   white: {
