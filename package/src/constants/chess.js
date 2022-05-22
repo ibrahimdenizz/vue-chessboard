@@ -267,7 +267,7 @@ export const SQUARE_WEIGHT_TABLES = {
     b: BISHOP_SQ,
     r: ROOK_SQ,
     q: QUEEN_SQ,
-    k: KING_MD_SQ,
+    k: { middle: KING_MD_SQ, end: KING_END_SQ },
   },
   [BLACK]: {
     p: PAWN_SQ.slice().reverse(),
@@ -275,6 +275,9 @@ export const SQUARE_WEIGHT_TABLES = {
     b: BISHOP_SQ.slice().reverse(),
     r: ROOK_SQ.slice().reverse(),
     q: QUEEN_SQ.slice().reverse(),
-    k: KING_MD_SQ.slice().reverse(),
+    k: {
+      middle: KING_MD_SQ.slice().reverse(),
+      end: KING_END_SQ.slice().reverse(),
+    },
   },
 };

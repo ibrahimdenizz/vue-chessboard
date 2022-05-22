@@ -680,6 +680,72 @@ const KING_MD_SQ = [
   30,
   20
 ];
+const KING_END_SQ = [
+  -50,
+  -40,
+  -30,
+  -20,
+  -20,
+  -30,
+  -40,
+  -50,
+  -30,
+  -20,
+  -10,
+  0,
+  0,
+  -10,
+  -20,
+  -30,
+  -30,
+  -10,
+  20,
+  30,
+  30,
+  20,
+  -10,
+  -30,
+  -30,
+  -10,
+  30,
+  40,
+  40,
+  30,
+  -10,
+  -30,
+  -30,
+  -10,
+  30,
+  40,
+  40,
+  30,
+  -10,
+  -30,
+  -30,
+  -10,
+  20,
+  30,
+  30,
+  20,
+  -10,
+  -30,
+  -30,
+  -30,
+  0,
+  0,
+  0,
+  0,
+  -30,
+  -30,
+  -50,
+  -30,
+  -30,
+  -30,
+  -30,
+  -30,
+  -30,
+  -50
+];
 const SQUARE_WEIGHT_TABLES = {
   [WHITE]: {
     p: PAWN_SQ,
@@ -687,7 +753,7 @@ const SQUARE_WEIGHT_TABLES = {
     b: BISHOP_SQ,
     r: ROOK_SQ,
     q: QUEEN_SQ,
-    k: KING_MD_SQ
+    k: { middle: KING_MD_SQ, end: KING_END_SQ }
   },
   [BLACK]: {
     p: PAWN_SQ.slice().reverse(),
@@ -695,7 +761,10 @@ const SQUARE_WEIGHT_TABLES = {
     b: BISHOP_SQ.slice().reverse(),
     r: ROOK_SQ.slice().reverse(),
     q: QUEEN_SQ.slice().reverse(),
-    k: KING_MD_SQ.slice().reverse()
+    k: {
+      middle: KING_MD_SQ.slice().reverse(),
+      end: KING_END_SQ.slice().reverse()
+    }
   }
 };
 class PieceList {
@@ -1135,6 +1204,7 @@ class ChessGame {
     __publicField(this, "moveCount", 1);
     __publicField(this, "moves", []);
     __publicField(this, "history", []);
+    __publicField(this, "redoHistory", []);
     __publicField(this, "hashHistory", []);
     this.board = new Board();
     this.zobrist = new Zobrist(this);
@@ -1232,6 +1302,7 @@ class ChessGame {
   }
   makeMove(move) {
     this.makeUglyMove(move);
+    this.redoHistory = [];
     this.buildMoves();
   }
   undoUglyMove() {
@@ -1273,9 +1344,17 @@ class ChessGame {
       }
     }
   }
-  undoMove(move) {
-    this.undoUglyMove(move);
+  undoMove() {
+    this.redoHistory.push(this.history[this.history.length - 1]);
+    this.undoUglyMove();
     this.buildMoves();
+  }
+  redoMove() {
+    if (this.redoHistory.length > 0) {
+      const redo = this.redoHistory.pop();
+      this.makeUglyMove(redo.move);
+      this.buildMoves();
+    }
   }
   makeCastlingMove(move) {
     const piece = move.piece;
@@ -1550,6 +1629,7 @@ class ChessAI {
     __publicField(this, "cutOff", 0);
     __publicField(this, "quiesceCount", 0);
     __publicField(this, "transpositionNum", 0);
+    __publicField(this, "bestEval", null);
     this.type = type;
     this.depth = depth;
     this.game = game;
@@ -1557,14 +1637,16 @@ class ChessAI {
     this.bestMove = null;
   }
   selectMove(_game, options) {
-    const game = this.game || _game;
-    if (this.type === "random")
+    const game = _game || this.game;
+    const type = options.type || this.type;
+    const depth = options.depth || this.depth;
+    if (type === "random")
       return this.selectRandomMove(game.moves);
-    if (this.type === "normal") {
+    if (type === "normal") {
       if (options == null ? void 0 : options.debug)
         this.resetDebug();
       this.bestMove = null;
-      this.search(this.depth, Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY, game);
+      this.search(depth, Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY, game);
       if (options == null ? void 0 : options.debug)
         this.logDebug();
       return this.bestMove;
@@ -1575,8 +1657,11 @@ class ChessAI {
     this.quiesceCount = 0;
     this.cutOff = 0;
     this.transpositionNum = 0;
+    this.bestEval = null;
   }
   logDebug() {
+    console.log("*************************");
+    console.log("eval: ", this.bestEval);
     console.log("searched position: ", this.positionCount);
     console.log("cut off count: ", this.cutOff);
     console.log("quiesce count: ", this.quiesceCount);
@@ -1668,7 +1753,7 @@ class ChessAI {
   endGameWeight(notPawnCount) {
     return 1 - Math.min(1, notPawnCount * (1 / endGameValue));
   }
-  endGameEval(friendlyKing, opponentKing, friendlyNotPawnMaterial) {
+  endGameEval(friendlyKing, opponentKing, friendlyNotPawnMaterial, endGameWeight) {
     let evaluation = 0;
     const { x: opponentKingX, y: opponentKingY } = opponentKing.position;
     const opponentDestDiffX = Math.max(3 - opponentKingX, opponentKingX - 4);
@@ -1680,7 +1765,6 @@ class ChessAI {
     const betweenDestY = Math.abs(friendKingY - opponentKingY);
     const betweenDest = betweenDestX + betweenDestY;
     evaluation += 14 - betweenDest;
-    const endGameWeight = 1 - Math.min(1, friendlyNotPawnMaterial * (1 / endGameValue));
     return evaluation * 10 * endGameWeight;
   }
   evaluate(_game) {
@@ -1695,10 +1779,12 @@ class ChessAI {
     blackEval += blackMaterial;
     const whiteNotPawnMaterial = whiteMaterial - board.getColorNotPawnNum(WHITE) * Coefficients.p;
     const blackNotPawnMaterial = blackMaterial - board.getColorNotPawnNum(BLACK) * Coefficients.p;
-    whiteEval += this.endGameEval(kings.white, kings.black, whiteNotPawnMaterial);
-    blackEval += this.endGameEval(kings.black, kings.white, blackNotPawnMaterial);
-    whiteEval += this.getPieceWeights(WHITE, board);
-    blackEval += this.getPieceWeights(BLACK, board);
+    const whiteEndGameWeight = this.endGameWeight(whiteNotPawnMaterial);
+    const blackEndGameWeight = this.endGameWeight(blackNotPawnMaterial);
+    whiteEval += this.endGameEval(kings.white, kings.black, whiteNotPawnMaterial, whiteEndGameWeight);
+    blackEval += this.endGameEval(kings.black, kings.white, blackNotPawnMaterial, blackEndGameWeight);
+    whiteEval += this.getPieceWeights(WHITE, whiteNotPawnMaterial, board);
+    blackEval += this.getPieceWeights(BLACK, blackNotPawnMaterial, board);
     return (whiteEval - blackEval) * Coefficients[game.currentPlayer];
   }
   getColorMaterial(color, board) {
@@ -1708,10 +1794,17 @@ class ChessAI {
     });
     return colorEval;
   }
-  getPieceWeights(color, board) {
+  getPieceWeights(color, notPawnMaterial, board) {
     let colorEval = 0;
     board.mapColorList(color, (piece) => {
-      colorEval += SQUARE_WEIGHT_TABLES[piece.color][piece.type][piece.index];
+      if (piece.type !== pieceCode.king) {
+        colorEval += SQUARE_WEIGHT_TABLES[piece.color][piece.type][piece.index];
+        return;
+      }
+      if (notPawnMaterial > endGameValue)
+        colorEval += SQUARE_WEIGHT_TABLES[piece.color][piece.type]["middle"][piece.index];
+      else
+        colorEval += SQUARE_WEIGHT_TABLES[piece.color][piece.type]["end"][piece.index];
     });
     return colorEval;
   }

@@ -6,7 +6,7 @@
 
 ## What is vue-chessboard
 
-vue-chessboard is Vue component. It provides chessboard view and functionality to your projects. This is my graduation project so there may be bug or performance issues.
+vue-chessboard is Vue component. It provides FEN based chessboard view and functionality to your projects. This is my graduation project so there may be bug or performance issues.
 
 ## Installation
 

@@ -27,6 +27,7 @@ export default class ChessGame {
   moveCount = 1;
   moves = [];
   history = [];
+  redoHistory = [];
   hashHistory = [];
 
   constructor(fen = DEFAULT_FEN) {
@@ -142,6 +143,7 @@ export default class ChessGame {
 
   makeMove(move) {
     this.makeUglyMove(move);
+    this.redoHistory = [];
     this.buildMoves();
   }
 
@@ -193,9 +195,18 @@ export default class ChessGame {
     }
   }
 
-  undoMove(move) {
-    this.undoUglyMove(move);
+  undoMove() {
+    this.redoHistory.push(this.history[this.history.length - 1]);
+    this.undoUglyMove();
     this.buildMoves();
+  }
+
+  redoMove() {
+    if (this.redoHistory.length > 0) {
+      const redo = this.redoHistory.pop();
+      this.makeUglyMove(redo.move);
+      this.buildMoves();
+    }
   }
 
   makeCastlingMove(move) {

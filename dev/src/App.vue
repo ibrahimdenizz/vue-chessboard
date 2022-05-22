@@ -29,7 +29,10 @@
       @onGameOver="onGameOver"
     />
     <div>
-      <button class="btn" @click="undoMove()">Undo</button>
+      <div class="btn-group">
+        <button class="btn" @click="undoMove()">Undo</button>
+        <button class="btn" @click="redoMove()">Redo</button>
+      </div>
       <button class="btn" @click="changeGameType('two-player')">
         Two player
       </button>
@@ -93,7 +96,7 @@ export default {
           }
         } else if (this.gameType === "normal-ai") {
           if (!game.gameOver && game.currentPlayer === "black") {
-            const aiMove = this.normalAI.selectMove(game.copy);
+            const aiMove = this.normalAI.selectMove(game.copy, { debug: true });
             game.makeMove(aiMove);
           }
         }
@@ -109,7 +112,11 @@ export default {
     },
     undoMove() {
       this.game.undoMove();
-      this.game.buildMoves();
+      console.log(this.game.redoHistory);
+    },
+    redoMove() {
+      this.game.redoMove();
+      console.log(this.game.redoHistory);
     },
     async playTwoAI() {
       this.isPlayTwoAI = true;
@@ -132,6 +139,10 @@ export default {
   height: 100vh;
   display: flex;
   justify-content: center;
+}
+
+.btn-group .btn {
+  display: initial;
 }
 
 .btn {

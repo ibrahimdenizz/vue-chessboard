@@ -7,6 +7,7 @@ import {
   TT_EXACT,
   TT_LOWER,
   SQUARE_WEIGHT_TABLES,
+  pieceCode,
 } from "@/constants/chess";
 import ChessGame from "./chessGame";
 import { TranspositionTable } from "./transpositionTable";
@@ -16,6 +17,7 @@ export default class ChessAI {
   cutOff = 0;
   quiesceCount = 0;
   transpositionNum = 0;
+  bestEval = null;
 
   constructor({ type = "normal", depth = 1, game = null }) {
     this.type = type;
@@ -26,14 +28,18 @@ export default class ChessAI {
   }
 
   selectMove(_game, options) {
-    const game = this.game || _game;
-    if (this.type === "random") return this.selectRandomMove(game.moves);
-    if (this.type === "normal") {
+    const game = _game || this.game;
+    const type = options.type || this.type;
+    const depth = options.depth || this.depth;
+
+    if (type === "random") return this.selectRandomMove(game.moves);
+
+    if (type === "normal") {
       if (options?.debug) this.resetDebug();
 
       this.bestMove = null;
       this.search(
-        this.depth,
+        depth,
         Number.NEGATIVE_INFINITY,
         Number.POSITIVE_INFINITY,
         game
@@ -50,9 +56,12 @@ export default class ChessAI {
     this.quiesceCount = 0;
     this.cutOff = 0;
     this.transpositionNum = 0;
+    this.bestEval = null;
   }
 
   logDebug() {
+    console.log("*************************");
+    console.log("eval: ", this.bestEval);
     console.log("searched position: ", this.positionCount);
     console.log("cut off count: ", this.cutOff);
     console.log("quiesce count: ", this.quiesceCount);
@@ -173,7 +182,12 @@ export default class ChessAI {
     return 1 - Math.min(1, notPawnCount * (1 / endGameValue));
   }
 
-  endGameEval(friendlyKing, opponentKing, friendlyNotPawnMaterial) {
+  endGameEval(
+    friendlyKing,
+    opponentKing,
+    friendlyNotPawnMaterial,
+    endGameWeight
+  ) {
     let evaluation = 0;
 
     const { x: opponentKingX, y: opponentKingY } = opponentKing.position;
@@ -188,9 +202,6 @@ export default class ChessAI {
     const betweenDestY = Math.abs(friendKingY - opponentKingY);
     const betweenDest = betweenDestX + betweenDestY;
     evaluation += 14 - betweenDest;
-
-    const endGameWeight =
-      1 - Math.min(1, friendlyNotPawnMaterial * (1 / endGameValue));
 
     return evaluation * 10 * endGameWeight;
   }
@@ -211,19 +222,25 @@ export default class ChessAI {
       whiteMaterial - board.getColorNotPawnNum(WHITE) * Coefficients.p;
     const blackNotPawnMaterial =
       blackMaterial - board.getColorNotPawnNum(BLACK) * Coefficients.p;
+
+    const whiteEndGameWeight = this.endGameWeight(whiteNotPawnMaterial);
+    const blackEndGameWeight = this.endGameWeight(blackNotPawnMaterial);
+
     whiteEval += this.endGameEval(
       kings.white,
       kings.black,
-      whiteNotPawnMaterial
+      whiteNotPawnMaterial,
+      whiteEndGameWeight
     );
     blackEval += this.endGameEval(
       kings.black,
       kings.white,
-      blackNotPawnMaterial
+      blackNotPawnMaterial,
+      blackEndGameWeight
     );
 
-    whiteEval += this.getPieceWeights(WHITE, board);
-    blackEval += this.getPieceWeights(BLACK, board);
+    whiteEval += this.getPieceWeights(WHITE, whiteNotPawnMaterial, board);
+    blackEval += this.getPieceWeights(BLACK, blackNotPawnMaterial, board);
 
     return (whiteEval - blackEval) * Coefficients[game.currentPlayer];
   }
@@ -236,10 +253,20 @@ export default class ChessAI {
 
     return colorEval;
   }
-  getPieceWeights(color, board) {
+  getPieceWeights(color, notPawnMaterial, board) {
     let colorEval = 0;
     board.mapColorList(color, (piece) => {
-      colorEval += SQUARE_WEIGHT_TABLES[piece.color][piece.type][piece.index];
+      if (piece.type !== pieceCode.king) {
+        colorEval += SQUARE_WEIGHT_TABLES[piece.color][piece.type][piece.index];
+        return;
+      }
+
+      if (notPawnMaterial > endGameValue)
+        colorEval +=
+          SQUARE_WEIGHT_TABLES[piece.color][piece.type]["middle"][piece.index];
+      else
+        colorEval +=
+          SQUARE_WEIGHT_TABLES[piece.color][piece.type]["end"][piece.index];
     });
 
     return colorEval;
