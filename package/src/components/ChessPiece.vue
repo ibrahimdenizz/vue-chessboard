@@ -33,8 +33,6 @@ import BlackPawn from "@/assets/chess-pieces/black/pawn.vue";
 import BlackQueen from "@/assets/chess-pieces/black/queen.vue";
 import BlackRook from "@/assets/chess-pieces/black/rook.vue";
 
-import Piece from "@/services/chess/pieces";
-
 export default {
   name: "ChessPiece",
   components: {
@@ -51,10 +49,7 @@ export default {
     BlackQueen,
     BlackRook,
   },
-  props: {
-    piece: Piece,
-    size: Number,
-  },
+  props: ["piece", "size"],
   computed: {
     pieceName() {
       return this.piece.color + "/" + this.piece.pieceName;

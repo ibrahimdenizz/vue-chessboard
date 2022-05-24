@@ -1,6 +1,6 @@
 <script>
 import { BLACK, DEFAULT_FEN, WHITE } from "@/constants/chess";
-import { ChessGame } from "@/services/chess";
+import { ChessGame } from "@ibrahimdeniz/chess-js";
 import BoardGround from "./BoardGround.vue";
 
 export default {
@@ -23,7 +23,7 @@ export default {
       default: 800,
     },
     game: {
-      type: ChessGame,
+      type: Object,
     },
     disableWhiteMoves: {
       type: Boolean,

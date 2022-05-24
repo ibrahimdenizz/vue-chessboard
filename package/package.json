@@ -13,7 +13,8 @@
     "chessboard",
     "chess",
     "vue",
-    "vuejs"
+    "vuejs",
+    "chess-ai"
   ],
   "license": "MIT",
   "files": [
@@ -39,12 +40,11 @@
   "homepage": "https://github.com/ibrahimdenizz/vue-chessboard/tree/main#readme",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "preview": "vite --config dev.vite.config.js preview",
-    "build:dev": "vite --config dev.vite.config.js build"
+    "build": "vite build"
   },
-  "peerDependencies": {
-    "vue": "^3.2.33"
+  "dependencies": {
+    "@ibrahimdeniz/chess-js": "^0.1.1",
+    "vue": "^3.2.25"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^2.3.1",

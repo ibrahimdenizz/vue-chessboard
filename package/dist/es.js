@@ -1,10 +1,11 @@
+import { openBlock, createElementBlock, createStaticVNode, createElementVNode, resolveComponent, createBlock, createCommentVNode, Fragment, renderList, normalizeClass, createVNode, normalizeStyle, toDisplayString } from "vue";
+const DEFAULT_FEN$1 = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", WHITE$1 = "white", BLACK$1 = "black";
 var __defProp = Object.defineProperty;
 var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
 var __publicField = (obj, key, value) => {
   __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
   return value;
 };
-import { openBlock, createElementBlock, createStaticVNode, createElementVNode, resolveComponent, createBlock, createCommentVNode, Fragment, renderList, normalizeClass, createVNode, normalizeStyle, toDisplayString } from "vue";
 const DEFAULT_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", WHITE = "white", BLACK = "black", K_SIDE_CASTLE = 2, Q_SIDE_CASTLE = 1;
 const RANKS = ["a", "b", "c", "d", "e", "f", "g", "h"];
 const rookSides = {
@@ -957,7 +958,7 @@ class Move {
     };
   }
   indexToString(index) {
-    return "" + RANKS[index % 8] + (parseInt(index / 8) + 1);
+    return "" + RANKS[index % 8] + (8 - parseInt(index / 8));
   }
   get startPosition() {
     return this.indexToPosition(this.startIndex);
@@ -997,7 +998,6 @@ class Move {
   getSanConflict(moves) {
     let conflict = "";
     const startPosition = this.startPosition;
-    this.targetPosition;
     let sameRank = false, sameFile = false;
     for (const move of moves) {
       if (move.piece.type === this.piece.type && move.startIndex !== this.startIndex && move.targetIndex === this.targetIndex) {
@@ -1012,7 +1012,7 @@ class Move {
     if (sameFile)
       conflict += RANKS[startPosition.x];
     if (sameRank)
-      conflict += startPosition.y + 1;
+      conflict += 8 - startPosition.y;
     return conflict;
   }
   setSAN(moves) {
@@ -1032,9 +1032,7 @@ class Move {
         }
         this.san += "x";
       }
-      const targetPosition = this.targetPosition;
-      this.san += RANKS[targetPosition.x];
-      this.san += targetPosition.y + 1;
+      this.san += this.targetString;
       if (this.promotion)
         this.san += "=" + this.promotion.toUpperCase();
     }
@@ -1374,15 +1372,15 @@ class ChessGame {
     else
       this.halfMoveCount++;
   }
-  makeMove(move) {
-    let uglyMove;
-    if (move instanceof Move)
+  convertToMove(move) {
+    let uglyMove = false;
+    if ((move == null ? void 0 : move.startIndex) && (move == null ? void 0 : move.targetIndex))
       uglyMove = move;
-    else if (typeof move === "string" || (move == null ? void 0 : move.san)) {
+    else if (typeof move === "string") {
       uglyMove = this.uglyMoves.find((_uglyMove) => _uglyMove.san === move);
     } else {
       uglyMove = this.uglyMoves.find((_uglyMove) => {
-        if (move.from === _uglyMove.startString && move.to === _uglyMove.targetString) {
+        if ((move == null ? void 0 : move.from) === _uglyMove.startString && (move == null ? void 0 : move.to) === _uglyMove.targetString) {
           if (_uglyMove.promotion) {
             return _uglyMove.promotion === move.promotion;
           }
@@ -1390,9 +1388,18 @@ class ChessGame {
         }
       });
     }
-    this.makeUglyMove(uglyMove);
+    return uglyMove;
+  }
+  validateMove(move) {
+    return !!this.convertToMove(move);
+  }
+  makeMove(move) {
+    if (!this.validateMove(move))
+      return false;
+    this.makeUglyMove(this.convertToMove(move));
     this.redoHistory = [];
     this.buildMoves();
+    return true;
   }
   undoUglyMove() {
     if (this.history.length > 0) {
@@ -1577,7 +1584,7 @@ class ChessGame {
   getOpponentColor(color) {
     return color === WHITE ? BLACK : WHITE;
   }
-  get board64Arr() {
+  get boardArray() {
     return this.board.squares;
   }
   get opponentColor() {
@@ -1596,14 +1603,18 @@ class ChessGame {
   }
   get winner() {
     if (this.gameOver) {
-      if (this.inCheck()) {
+      if (this.inCheck() && this.uglyMoves.length === 0) {
         return this.currentPlayer === WHITE ? BLACK : WHITE;
       } else {
         return "draw";
       }
     } else {
-      return null;
+      return false;
     }
+  }
+  get enPassant() {
+    const enPassant = this.fenEnPassant;
+    return enPassant === "-" ? null : enPassant;
   }
   set enPassant(value) {
     if (value === "-") {
@@ -1673,9 +1684,9 @@ class ChessGame {
   }
 }
 class TranspositionTable {
-  constructor(game2) {
+  constructor(game) {
     __publicField(this, "hashes", {});
-    this.game = game2;
+    this.game = game;
   }
   get hash() {
     return this.game.zobrist.hash;
@@ -1683,18 +1694,18 @@ class TranspositionTable {
   clear() {
     this.hashes = {};
   }
-  getHash(game2) {
-    if (game2)
-      return game2.zobrist.hash;
+  getHash(game) {
+    if (game)
+      return game.zobrist.hash;
     else
       return this.hash;
   }
-  getMove(game2 = null) {
-    const hash = this.getHash(game2);
+  getMove(game = null) {
+    const hash = this.getHash(game);
     return entries[hash].move;
   }
-  getStoredHash({ depth, alpha, beta }, game2 = null) {
-    const hash = this.getHash(game2);
+  getStoredHash({ depth, alpha, beta }, game = null) {
+    const hash = this.getHash(game);
     const storedHash = this.hashes[hash];
     if (storedHash && depth <= storedHash.depth) {
       if (storedHash.type === TT_EXACT)
@@ -1706,14 +1717,14 @@ class TranspositionTable {
     }
     return null;
   }
-  addEvaluation(newHash, game2 = null) {
-    const hash = this.getHash(game2);
+  addEvaluation(newHash, game = null) {
+    const hash = this.getHash(game);
     newHash.hash = hash;
     this.hashes[hash] = newHash;
   }
 }
 class ChessAI {
-  constructor({ type = "normal", depth = 1, fen = DEFAULT_FEN }) {
+  constructor(type = "normal", depth = 1) {
     __publicField(this, "positionCount", 0);
     __publicField(this, "cutOff", 0);
     __publicField(this, "quiesceCount", 0);
@@ -1721,18 +1732,18 @@ class ChessAI {
     __publicField(this, "bestEval", null);
     this.type = type;
     this.depth = depth;
-    this.game = new ChessGame(fen);
     this.transpositionTable = new TranspositionTable(this.game);
     this.bestMove = null;
   }
   selectMove(fen, options) {
     const type = (options == null ? void 0 : options.type) || this.type;
     const depth = (options == null ? void 0 : options.depth) || this.depth;
-    console.log(depth);
     if (fen)
       this.game = new ChessGame(fen);
+    else
+      return null;
     if (type === "random")
-      return this.selectRandomMove(game.uglyMoves);
+      return this.selectRandomMove(this.game.uglyMoves);
     if (type === "normal") {
       if (options == null ? void 0 : options.debug)
         this.resetDebug();
@@ -1740,6 +1751,7 @@ class ChessAI {
       this.search(depth, Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY, this.game);
       if (options == null ? void 0 : options.debug)
         this.logDebug();
+      this.bestMove.setSAN(this.game.uglyMoves);
       return this.bestMove.pretty;
     }
   }
@@ -1761,14 +1773,14 @@ class ChessAI {
   selectRandomMove(moves) {
     return moves[Math.floor(Math.random() * moves.length)];
   }
-  search(depth, alpha, beta, game2, root = 0) {
-    if (root > 0 && game2.hashHistory.includes(game2.zobrist.hash))
+  search(depth, alpha, beta, game, root = 0) {
+    if (root > 0 && game.hashHistory.includes(game.zobrist.hash))
       return 0;
     const storedHash = this.transpositionTable.getStoredHash({
       depth,
       alpha,
       beta
-    }, game2);
+    }, game);
     if (storedHash !== null) {
       this.transpositionNum++;
       if (root === 0)
@@ -1777,11 +1789,11 @@ class ChessAI {
     }
     if (depth === 0) {
       this.positionCount++;
-      return this.quiesce(alpha, beta, game2);
+      return this.quiesce(alpha, beta, game);
     }
-    const moves = game2.generateMoves();
+    const moves = game.generateMoves();
     if (moves.length === 0) {
-      if (game2.inCheck()) {
+      if (game.inCheck()) {
         return Number.NEGATIVE_INFINITY;
       }
       return 0;
@@ -1790,9 +1802,9 @@ class ChessAI {
     let bestMove;
     moves.sort((a, b) => b.score - a.score);
     for (const move of moves) {
-      game2.makeUglyMove(move);
-      let evaluation = -this.search(depth - 1, -beta, -alpha, game2, root + 1);
-      game2.undoUglyMove();
+      game.makeUglyMove(move);
+      let evaluation = -this.search(depth - 1, -beta, -alpha, game, root + 1);
+      game.undoUglyMove();
       if (evaluation >= beta) {
         this.cutOff++;
         this.transpositionTable.addEvaluation({
@@ -1800,7 +1812,7 @@ class ChessAI {
           move,
           score: beta,
           type: TT_LOWER
-        }, game2);
+        }, game);
         return beta;
       }
       if (evaluation > alpha) {
@@ -1818,22 +1830,22 @@ class ChessAI {
       move: bestMove,
       score: alpha,
       type: tt_type
-    }, game2);
+    }, game);
     return alpha;
   }
-  quiesce(alpha, beta, game2) {
+  quiesce(alpha, beta, game) {
     this.quiesceCount++;
-    const stand_pat = this.evaluate(game2);
+    const stand_pat = this.evaluate(game);
     if (stand_pat >= beta)
       return beta;
     if (alpha < stand_pat)
       alpha = stand_pat;
-    const captureMoves = game2.generateMoves({ onlyCapture: true });
+    const captureMoves = game.generateMoves({ onlyCapture: true });
     captureMoves.sort((a, b) => b.score - a.score);
     for (const move of captureMoves) {
-      game2.makeUglyMove(move);
-      const score = -this.quiesce(-beta, -alpha, game2);
-      game2.undoUglyMove();
+      game.makeUglyMove(move);
+      const score = -this.quiesce(-beta, -alpha, game);
+      game.undoUglyMove();
       if (score >= beta)
         return beta;
       if (score > alpha)
@@ -1859,8 +1871,8 @@ class ChessAI {
     return evaluation * 10 * endGameWeight;
   }
   evaluate(_game) {
-    const game2 = this.game || _game;
-    const board = game2.board;
+    const game = this.game || _game;
+    const board = game.board;
     const kings = board.kings;
     let whiteEval = 0;
     let blackEval = 0;
@@ -1876,7 +1888,7 @@ class ChessAI {
     blackEval += this.endGameEval(kings.black, kings.white, blackNotPawnMaterial, blackEndGameWeight);
     whiteEval += this.getPieceWeights(WHITE, whiteNotPawnMaterial, board);
     blackEval += this.getPieceWeights(BLACK, blackNotPawnMaterial, board);
-    return (whiteEval - blackEval) * Coefficients[game2.currentPlayer];
+    return (whiteEval - blackEval) * Coefficients[game.currentPlayer];
   }
   getColorMaterial(color, board) {
     let colorEval = 0;
@@ -2197,10 +2209,7 @@ const _sfc_main$2 = {
     BlackQueen,
     BlackRook
   },
-  props: {
-    piece: Piece,
-    size: Number
-  },
+  props: ["piece", "size"],
   computed: {
     pieceName() {
       return this.piece.color + "/" + this.piece.pieceName;
@@ -2272,7 +2281,7 @@ const _sfc_main$1 = {
   },
   props: {
     size: Number,
-    game: ChessGame,
+    game: Object,
     isActivePiece: Function
   },
   emits: ["selectPiece", "isActivePiece"],
@@ -2297,10 +2306,10 @@ function _sfc_render$1(_ctx, _cache, $props, $setup, $data, $options) {
   const _component_chess_piece = resolveComponent("chess-piece");
   return openBlock(), createElementBlock(Fragment, null, [
     (openBlock(), createElementBlock(Fragment, null, renderList(8, (y) => {
-      return openBlock(), createElementBlock(Fragment, { key: y }, [
+      return openBlock(), createElementBlock(Fragment, null, [
         (openBlock(), createElementBlock(Fragment, null, renderList(8, (x) => {
           return createElementVNode("div", {
-            key: x,
+            key: y * x,
             class: normalizeClass(["square", x % 2 === y % 2 ? "light-square" : "dark-square"])
           }, [
             $options.getPiece(x, y) ? (openBlock(), createElementBlock("div", {
@@ -2337,7 +2346,7 @@ function _sfc_render$1(_ctx, _cache, $props, $setup, $data, $options) {
     ])
   ], 64);
 }
-var BoardGround = /* @__PURE__ */ _export_sfc(_sfc_main$1, [["render", _sfc_render$1], ["__scopeId", "data-v-8ab6142e"]]);
+var BoardGround = /* @__PURE__ */ _export_sfc(_sfc_main$1, [["render", _sfc_render$1], ["__scopeId", "data-v-0bc358a3"]]);
 var ChessBoard_vue_vue_type_style_index_0_scoped_true_lang = "";
 const _sfc_main = {
   name: "ChessBoard",
@@ -2352,14 +2361,14 @@ const _sfc_main = {
   props: {
     fen: {
       type: String,
-      default: DEFAULT_FEN
+      default: DEFAULT_FEN$1
     },
     size: {
       type: Number,
       default: 800
     },
     game: {
-      type: ChessGame
+      type: Object
     },
     disableWhiteMoves: {
       type: Boolean,
@@ -2382,7 +2391,7 @@ const _sfc_main = {
   watch: {
     fen(newFEN) {
       if (this.chessGame.fen !== newFEN)
-        this.chessGame.loadGameWithFen(newFEN || DEFAULT_FEN);
+        this.chessGame.loadGameWithFen(newFEN || DEFAULT_FEN$1);
     },
     "chessGame.fen": {
       handler(newFen) {
@@ -2401,15 +2410,15 @@ const _sfc_main = {
     }
   },
   created() {
-    this.chessGame.loadGameWithFen(this.fen || DEFAULT_FEN);
+    this.chessGame.loadGameWithFen(this.fen || DEFAULT_FEN$1);
   },
   methods: {
     isActivePiece(piece) {
       if (this.chessGame.gameOver)
         return false;
-      if (this.disableWhiteMoves && this.chessGame.currentPlayer === WHITE)
+      if (this.disableWhiteMoves && this.chessGame.currentPlayer === WHITE$1)
         return false;
-      if (this.disableBlackMoves && this.chessGame.currentPlayer === BLACK)
+      if (this.disableBlackMoves && this.chessGame.currentPlayer === BLACK$1)
         return false;
       return piece && piece.color === this.chessGame.currentPlayer;
     },
@@ -2461,5 +2470,5 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     ], 4)
   ]);
 }
-var ChessBoard = /* @__PURE__ */ _export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-843d543c"]]);
+var ChessBoard = /* @__PURE__ */ _export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-40e48e04"]]);
 export { ChessAI, ChessBoard, ChessGame };

@@ -1,5 +1,4 @@
 <script>
-import { ChessGame } from "@/services/chess";
 import ChessPiece from "./ChessPiece.vue";
 
 export default {
@@ -11,7 +10,7 @@ export default {
   },
   props: {
     size: Number,
-    game: ChessGame,
+    game: Object,
     isActivePiece: Function,
   },
   emits: ["selectPiece", "isActivePiece"],
@@ -32,10 +31,10 @@ export default {
 </script>
 
 <template>
-  <template v-for="y in 8" :key="y">
+  <template v-for="y in 8">
     <div
       v-for="x in 8"
-      :key="x"
+      :key="y * x"
       class="square"
       :class="x % 2 === y % 2 ? 'light-square' : 'dark-square'"
     >
@@ -76,6 +75,11 @@ export default {
 $dark-color: #b58863;
 $light-color: #f0d9b5;
 
+.wrap {
+  width: 100%;
+  height: 100%;
+  display: flex;
+}
 .square {
   position: relative;
   width: 12.5%;

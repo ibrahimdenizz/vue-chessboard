@@ -61,8 +61,8 @@ export default {
       chessBoardSize: width > height ? height * ratio : width * ratio,
       fen: "",
       game,
-      randomAI: new ChessAI({ type: "random" }),
-      normalAI: new ChessAI({ type: "normal", depth: 4 }),
+      randomAI: new ChessAI("random"),
+      normalAI: new ChessAI("normal", 3),
       winner: null,
       gameType: "normal-ai",
       isPlayTwoAI: false,
@@ -84,8 +84,7 @@ export default {
       this.chessBoardSize = width > height ? height * ratio : width * ratio;
     },
     onMovePlayed({ move, game }) {
-      console.log(game.moves);
-      game.makeMove(move);
+      console.log(game.makeMove(move));
       if (this.gameType !== "two-player") this.makeAiMove(game);
     },
     makeAiMove(game) {
@@ -97,7 +96,9 @@ export default {
           }
         } else if (this.gameType === "normal-ai") {
           if (!game.gameOver && game.currentPlayer === "black") {
+            console.log(this.normalAI);
             const aiMove = this.normalAI.selectMove(game.fen, { debug: true });
+            console.log(aiMove);
             game.makeMove(aiMove);
           }
         }
