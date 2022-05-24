@@ -26,6 +26,9 @@
         :size="chessBoardSize"
         :game="game"
         v-model:fen="fen"
+        :disableBlackMoves="
+          gameType === 'normal-ai' || gameType === 'random-ai'
+        "
         @onMovePlayed="onMovePlayed"
         @onGameOver="onGameOver"
       />
