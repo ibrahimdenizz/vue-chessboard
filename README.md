@@ -111,8 +111,7 @@ props: {
     default: 800,
   },
   game: {
-    type: ChessGame, // From my chess service
-    default: new ChessGame(),
+    type: Object,
   },
   disableWhiteMoves: {
     type: Boolean,
@@ -121,8 +120,12 @@ props: {
   disableBlackMoves: {
     type: Boolean,
     default: false,
-  }
-}
+  },
+  blackFaceUp: {
+    type: Boolean,
+    default: false,
+  },
+},
 ```
 
 ## Emits

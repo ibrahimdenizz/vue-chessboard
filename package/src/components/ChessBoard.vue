@@ -33,6 +33,10 @@ export default {
       type: Boolean,
       default: false,
     },
+    blackFaceUp: {
+      type: Boolean,
+      default: false,
+    },
   },
   emits: ["onMovePlayed", "onGameOver", "update:fen"],
   components: {
@@ -88,11 +92,13 @@ export default {
     },
     getMoveStyle(move) {
       if (move.promotion && move.promotion !== "q") return { display: "none" };
-
+      let { x, y } = move.targetPosition;
+      if (this.blackFaceUp) {
+        x = 7 - x;
+        y = 7 - y;
+      }
       return {
-        transform: `translate(${move.targetPosition.x * 100}%,${
-          move.targetPosition.y * 100
-        }% `,
+        transform: `translate(${x * 100}%,${y * 100}% `,
       };
     },
   },
@@ -107,6 +113,7 @@ export default {
         :size="size"
         @selectPiece="selectPiece"
         :isActivePiece="isActivePiece"
+        :blackFaceUp="blackFaceUp"
       />
 
       <div class="board-positions valid-moves">

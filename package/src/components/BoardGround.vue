@@ -12,6 +12,7 @@ export default {
     size: Number,
     game: Object,
     isActivePiece: Function,
+    blackFaceUp: Boolean,
   },
   emits: ["selectPiece", "isActivePiece"],
   watch: {
@@ -23,6 +24,8 @@ export default {
   },
   methods: {
     getPiece(x, y) {
+      if (this.blackFaceUp) return this.game.getPiece(9 - x, 9 - y);
+
       return this.game.getPiece(x, y);
     },
   },
@@ -55,7 +58,7 @@ export default {
       :class="i % 2 === 1 ? 'dark' : 'light'"
       :style="{ fontSize: `${size * 0.02}px` }"
     >
-      {{ 9 - i }}
+      {{ blackFaceUp ? i : 9 - i }}
     </div>
   </div>
   <div class="board-positions letter">
@@ -66,7 +69,11 @@ export default {
       :class="i % 2 === 0 ? 'dark' : 'light'"
       :style="{ fontSize: `${size * 0.02}px` }"
     >
-      {{ String.fromCharCode(96 + i) }}
+      {{
+        blackFaceUp
+          ? String.fromCharCode(96 + (9 - i))
+          : String.fromCharCode(96 + i)
+      }}
     </div>
   </div>
 </template>

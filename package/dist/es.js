@@ -2282,7 +2282,8 @@ const _sfc_main$1 = {
   props: {
     size: Number,
     game: Object,
-    isActivePiece: Function
+    isActivePiece: Function,
+    blackFaceUp: Boolean
   },
   emits: ["selectPiece", "isActivePiece"],
   watch: {
@@ -2294,6 +2295,8 @@ const _sfc_main$1 = {
   },
   methods: {
     getPiece(x, y) {
+      if (this.blackFaceUp)
+        return this.game.getPiece(9 - x, 9 - y);
       return this.game.getPiece(x, y);
     }
   },
@@ -2332,7 +2335,7 @@ function _sfc_render$1(_ctx, _cache, $props, $setup, $data, $options) {
           key: i,
           class: normalizeClass(["number no-select", i % 2 === 1 ? "dark" : "light"]),
           style: normalizeStyle({ fontSize: `${$props.size * 0.02}px` })
-        }, toDisplayString(9 - i), 7);
+        }, toDisplayString($props.blackFaceUp ? i : 9 - i), 7);
       }), 64))
     ]),
     createElementVNode("div", _hoisted_3, [
@@ -2341,12 +2344,12 @@ function _sfc_render$1(_ctx, _cache, $props, $setup, $data, $options) {
           key: i,
           class: normalizeClass(["letters no-select", i % 2 === 0 ? "dark" : "light"]),
           style: normalizeStyle({ fontSize: `${$props.size * 0.02}px` })
-        }, toDisplayString(String.fromCharCode(96 + i)), 7);
+        }, toDisplayString($props.blackFaceUp ? String.fromCharCode(96 + (9 - i)) : String.fromCharCode(96 + i)), 7);
       }), 64))
     ])
   ], 64);
 }
-var BoardGround = /* @__PURE__ */ _export_sfc(_sfc_main$1, [["render", _sfc_render$1], ["__scopeId", "data-v-0bc358a3"]]);
+var BoardGround = /* @__PURE__ */ _export_sfc(_sfc_main$1, [["render", _sfc_render$1], ["__scopeId", "data-v-1d2bfbbc"]]);
 var ChessBoard_vue_vue_type_style_index_0_scoped_true_lang = "";
 const _sfc_main = {
   name: "ChessBoard",
@@ -2375,6 +2378,10 @@ const _sfc_main = {
       default: false
     },
     disableBlackMoves: {
+      type: Boolean,
+      default: false
+    },
+    blackFaceUp: {
       type: Boolean,
       default: false
     }
@@ -2436,8 +2443,13 @@ const _sfc_main = {
     getMoveStyle(move) {
       if (move.promotion && move.promotion !== "q")
         return { display: "none" };
+      let { x, y } = move.targetPosition;
+      if (this.blackFaceUp) {
+        x = 7 - x;
+        y = 7 - y;
+      }
       return {
-        transform: `translate(${move.targetPosition.x * 100}%,${move.targetPosition.y * 100}% `
+        transform: `translate(${x * 100}%,${y * 100}% `
       };
     }
   }
@@ -2455,8 +2467,9 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         game: $options.chessGame,
         size: $props.size,
         onSelectPiece: $options.selectPiece,
-        isActivePiece: $options.isActivePiece
-      }, null, 8, ["game", "size", "onSelectPiece", "isActivePiece"]),
+        isActivePiece: $options.isActivePiece,
+        blackFaceUp: $props.blackFaceUp
+      }, null, 8, ["game", "size", "onSelectPiece", "isActivePiece", "blackFaceUp"]),
       createElementVNode("div", _hoisted_1, [
         (openBlock(true), createElementBlock(Fragment, null, renderList($data.validMoves, (move, index) => {
           return openBlock(), createElementBlock("div", {
@@ -2470,5 +2483,5 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     ], 4)
   ]);
 }
-var ChessBoard = /* @__PURE__ */ _export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-40e48e04"]]);
+var ChessBoard = /* @__PURE__ */ _export_sfc(_sfc_main, [["render", _sfc_render], ["__scopeId", "data-v-25e6138c"]]);
 export { ChessAI, ChessBoard, ChessGame };
