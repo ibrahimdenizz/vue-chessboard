@@ -1,7 +1,7 @@
 {
   "name": "@ibrahimdeniz/vue-chessboard",
   "description": "Chessboard component for vue based on fen notation",
-  "version": "0.3.2",
+  "version": "0.4.1",
   "author": {
     "name": "İbrahim Deniz",
     "email": "dnzibrahim1@gmail.com"
