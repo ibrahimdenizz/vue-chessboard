@@ -12,7 +12,7 @@ export default {
     size: Number,
     game: Object,
     isActivePiece: Function,
-    blackFaceUp: Boolean,
+    orientation: String,
   },
   emits: ["selectPiece", "isActivePiece"],
   watch: {
@@ -24,7 +24,7 @@ export default {
   },
   methods: {
     getPiece(x, y) {
-      if (this.blackFaceUp) return this.game.getPiece(9 - x, 9 - y);
+      if (this.orientation === "black") return this.game.getPiece(9 - x, 9 - y);
 
       return this.game.getPiece(x, y);
     },
@@ -34,113 +34,120 @@ export default {
 </script>
 
 <template>
-  <template v-for="y in 8">
-    <div
-      v-for="x in 8"
-      :key="y * x"
-      class="square"
-      :class="x % 2 === y % 2 ? 'light-square' : 'dark-square'"
-    >
+  <div class="vc-board-ground">
+    <template v-for="y in 8">
       <div
-        v-if="getPiece(x, y)"
-        :class="isActivePiece(getPiece(x, y)) ? 'piece active-piece' : 'piece'"
-        @click="$emit('selectPiece', getPiece(x, y))"
+        v-for="x in 8"
+        :key="y * x"
+        class="vc-square"
+        :class="x % 2 === y % 2 ? 'vc-light-square' : 'vc-dark-square'"
       >
-        <chess-piece :size="size" :piece="getPiece(x, y)" />
+        <div
+          v-if="getPiece(x, y)"
+          :class="
+            isActivePiece(getPiece(x, y))
+              ? 'vc-piece vc-active-piece'
+              : 'vc-piece'
+          "
+          @click="$emit('selectPiece', getPiece(x, y))"
+        >
+          <chess-piece :size="size" :piece="getPiece(x, y)" />
+        </div>
+      </div>
+    </template>
+    <div class="vc-board-positions">
+      <div
+        v-for="i in 8"
+        :key="i"
+        class="vc-number vc-no-select"
+        :class="i % 2 === 1 ? 'vc-dark' : 'vc-light'"
+        :style="{ fontSize: `${size * 0.02}px` }"
+      >
+        {{ orientation === "black" ? i : 9 - i }}
       </div>
     </div>
-  </template>
-  <div class="board-positions">
-    <div
-      v-for="i in 8"
-      :key="i"
-      class="number no-select"
-      :class="i % 2 === 1 ? 'dark' : 'light'"
-      :style="{ fontSize: `${size * 0.02}px` }"
-    >
-      {{ blackFaceUp ? i : 9 - i }}
-    </div>
-  </div>
-  <div class="board-positions letter">
-    <div
-      v-for="i in 8"
-      :key="i"
-      class="letters no-select"
-      :class="i % 2 === 0 ? 'dark' : 'light'"
-      :style="{ fontSize: `${size * 0.02}px` }"
-    >
-      {{
-        blackFaceUp
-          ? String.fromCharCode(96 + (9 - i))
-          : String.fromCharCode(96 + i)
-      }}
+    <div class="vc-board-positions vc-letter">
+      <div
+        v-for="i in 8"
+        :key="i"
+        class="vc-letters vc-no-select"
+        :class="i % 2 === 0 ? 'vc-dark' : 'vc-light'"
+        :style="{ fontSize: `${size * 0.02}px` }"
+      >
+        {{
+          orientation === "black"
+            ? String.fromCharCode(96 + (9 - i))
+            : String.fromCharCode(96 + i)
+        }}
+      </div>
     </div>
   </div>
 </template>
 
-<style lang="scss" scoped>
-$dark-color: #b58863;
-$light-color: #f0d9b5;
+<style lang="scss">
+$light-color: var(--vc-light-color);
+$dark-color: var(--vc-dark-color);
 
-.wrap {
+.vc-board-ground {
+  position: relative;
   width: 100%;
-  height: 100%;
   display: flex;
+  flex-wrap: wrap;
 }
-.square {
+.vc-square {
   position: relative;
   width: 12.5%;
   height: 12.5%;
 }
 
-.light-square {
+.vc-light-square {
   background-color: $light-color;
 }
 
-.dark-square {
+.vc-dark-square {
   background-color: $dark-color;
 }
 
-.board-positions {
+.vc-board-positions {
   position: absolute;
   width: 100%;
   height: 100%;
 
-  .number {
+  .vc-number {
     text-align: left;
     margin-left: 0.5%;
     margin-top: 0.5%;
     width: 12%;
     height: 12%;
 
-    &.dark {
+    &.vc-dark {
       color: $dark-color;
     }
-    &.light {
+    &.vc-light {
       color: $light-color;
     }
   }
 
-  &.letter {
+  &.vc-letter {
     display: flex;
     align-items: flex-end;
   }
 
-  .letters {
+  .vc-letters {
     width: 12%;
     text-align: right;
     margin-right: 0.5%;
     margin-top: 0.5%;
 
-    &.dark {
+    &.vc-dark {
       color: $dark-color;
     }
-    &.light {
+    &.vc-light {
       color: $light-color;
     }
   }
 }
-.piece {
+.vc-piece {
   position: absolute;
   width: 100%;
   height: 100%;
@@ -149,7 +156,14 @@ $light-color: #f0d9b5;
   justify-content: center;
   align-items: center;
 }
-.active-piece {
+.vc-active-piece {
   cursor: pointer;
+}
+
+.vc-no-select {
+  -webkit-user-select: none; /* Safari */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE10+/Edge */
+  user-select: none; /* Standard */
 }
 </style>

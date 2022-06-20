@@ -46,12 +46,12 @@ __metadata:
   linkType: hard
 
 "@ibrahimdeniz/vue-chessboard@file:../package::locator=dev%40workspace%3A.":
-  version: 0.2.1
-  resolution: "@ibrahimdeniz/vue-chessboard@file:../package#../package::hash=e2678c&locator=dev%40workspace%3A."
+  version: 0.3.2
+  resolution: "@ibrahimdeniz/vue-chessboard@file:../package#../package::hash=569300&locator=dev%40workspace%3A."
   dependencies:
     "@ibrahimdeniz/chess-js": ^0.1.1
     vue: ^3.2.25
-  checksum: 1c5762a79cddef64632a78bf936fac653f0360ec871834fb2cfa9d5aac74c29f6b088467e89fa96756416dffb0a595ad176fe227308671dc73c10a9eaae33350
+  checksum: d30074bd5d514346a60cc37c3b92a9cf2f533f480fe4c605b3608b9b6b50ae05870618890085db1b2029a80e27e63b2fdc5ce3b25760f34901b95363ba551de0
   languageName: node
   linkType: hard
 

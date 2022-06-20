@@ -31,6 +31,7 @@
         "
         @onMovePlayed="onMovePlayed"
         @onGameOver="onGameOver"
+        orientation="black"
       />
       <div>
         <div class="btn-group">
@@ -209,6 +210,9 @@ export default {
 
 <style lang="scss" scoped>
 .home {
+  --vc-light-color: lightgray;
+  --vc-dark-color: darkgray;
+  --vc-move-color: red;
   width: 100vw;
   height: 100vh;
   display: flex;

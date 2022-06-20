@@ -33,9 +33,9 @@ export default {
       type: Boolean,
       default: false,
     },
-    blackFaceUp: {
-      type: Boolean,
-      default: false,
+    orientation: {
+      type: String,
+      default: "white",
     },
   },
   emits: ["onMovePlayed", "onGameOver", "update:fen"],
@@ -93,7 +93,7 @@ export default {
     getMoveStyle(move) {
       if (move.promotion && move.promotion !== "q") return { display: "none" };
       let { x, y } = move.targetPosition;
-      if (this.blackFaceUp) {
+      if (this.orientation === "black") {
         x = 7 - x;
         y = 7 - y;
       }
@@ -107,20 +107,20 @@ export default {
 
 <template>
   <div>
-    <div class="board" :style="{ width: `${size}px`, height: `${size}px` }">
+    <div class="vc-board" :style="{ width: `${size}px`, height: `${size}px` }">
       <board-ground
         :game="chessGame"
         :size="size"
         @selectPiece="selectPiece"
         :isActivePiece="isActivePiece"
-        :blackFaceUp="blackFaceUp"
+        :orientation="orientation"
       />
 
-      <div class="board-positions valid-moves">
+      <div class="vc-board-positions vc-valid-moves">
         <div
           v-for="(move, index) in validMoves"
           :key="index"
-          class="valid-move"
+          class="vc-valid-move"
           :style="getMoveStyle(move)"
           @click="makeMove(move)"
         ></div>
@@ -129,28 +129,35 @@ export default {
   </div>
 </template>
 
-<style scoped lang="scss">
-$dark-color: #b58863;
-$light-color: #f0d9b5;
+<style lang="scss">
+:root {
+  --vc-light-color: #b58863;
+  --vc-dark-color: #f0d9b5;
+  --vc-move-color: blue;
+}
 
-.board {
+$light-color: var(--vc-light-color);
+$dark-color: var(--vc-dark-color);
+$move-color: var(--vc-move-color);
+
+.vc-board {
   position: relative;
   width: 100%;
   display: flex;
   flex-wrap: wrap;
 }
 
-.board-positions {
+.vc-board-positions {
   position: absolute;
   width: 100%;
   height: 100%;
 
-  .valid-move {
+  .vc-valid-move {
     z-index: 100;
     width: 12.5%;
     height: 12.5%;
     position: absolute;
-    background-color: blue;
+    background-color: $move-color;
     opacity: 0.2;
     cursor: pointer;
   }

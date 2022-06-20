@@ -111,8 +111,7 @@ props: {
     default: 800,
   },
   game: {
-    type: ChessGame, // From my chess service
-    default: new ChessGame(),
+    type: Object,
   },
   disableWhiteMoves: {
     type: Boolean,
@@ -121,7 +120,11 @@ props: {
   disableBlackMoves: {
     type: Boolean,
     default: false,
-  }
+  },
+  orientation: {
+    type: String,
+    default: "white",
+  },
 }
 ```
 
@@ -144,6 +147,53 @@ When game is finished, this emit executed. ChessGame type is from my chess servi
 ```js
 onGameOver({ winner, game }) { }
 ```
+
+## CSS
+
+### Colors
+
+  There are three color option for the vue-chessboard. They are `--vc-light-color`, `--vc-dark-color` and `--vc-move-color`.
+
+  #### How to overwrite colors?
+
+  ```vue
+    <template>
+    <div class="chess-board-wrapper">
+      <chess-board @onMovePlayed="onMovePlayed" />
+    <div>
+    </template>
+
+    <script>
+    import { ChessBoard } from "@ibrahimdeniz/vue-chessboard";
+    import "@ibrahimdeniz/vue-chessboard/dist/style.css";
+
+    export default {
+      name: "App",
+      data() {
+        return {
+          chessBoardSize: 800,
+        };
+      },
+      components: {
+        ChessBoard,
+      },
+      methods: {
+        onMovePlayed({ move, game }) {
+          game.makeMove(move);
+        },
+      },
+    };
+    </script>
+
+    <style>
+      .chess-board-wrapper{
+        --vc-light-color: lightgray;
+        --vc-dark-color: darkgray;
+        --vc-move-color: red;
+      }
+    </style>
+  ```
+
 
 ## LICENSE
 
